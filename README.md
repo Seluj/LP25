@@ -61,6 +61,23 @@ Par exemple, avec les valeurs données ci dessous (longueur des chaînes de cara
 
 Si un champ de la table est défini du type `primary key`, un quatrième fichier est créé : il contient une valeur binaire d'un `unsigned long long` initialisé à `1` et incrémenté à chaque insertion d'un enregistrement dans la table, lorsqu'aucune valeur pour cette clé n'est spécifiée. Dans le cas contraire, la valeur est mise à jour avec la valeur maximale de ce champ dans la table, incrémentée de `1`;
 
+### Exemple
+
+L'exemple ci dessous montre l'arborescence d'une base de données nommée `db` et contenant deux tables : `une_table` et `another_table`. La table `une_table` comporte un champ de type `primary key` alors que la table `another_table` n'a que des champs `text`, `int` ou `float` :
+
+```bash
+db
+├── another_table
+│   ├── another_table.data
+│   ├── another_table.def
+│   └── another_table.idx
+└── une_table
+    ├── une_table.data
+    ├── une_table.def
+    ├── une_table.idx
+    └── une_table.key
+```
+
 ## Langage SQL simplifié
 
 Interagir avec une base de données se fait notamment avec le langage SQL (*Structured Query Language*). Dans ce projet, vous serez amenés à manipuler les requêtes (simplifiées) suivantes :
