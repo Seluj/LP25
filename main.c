@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
         if (strcmp(buffer, "exit") == 0)
             break;
         // Here: parse SQL, check query, execute query
-
+        
     } while (true);
     return 0;
 }

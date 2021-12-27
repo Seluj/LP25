@@ -18,13 +18,32 @@
  */
 bool check_query(query_result_t *query) {
     switch (query->query_type) {
+        case QUERY_NONE:
+            return false;
+            break;
+        case QUERY_CREATE_TABLE:
+            return check_query_create(&query->query_content.create_query);
+            break;
+        case QUERY_DROP_TABLE:
+            return check_query_drop_table(query->query_content.table_name);
+            break;
         case QUERY_SELECT:
             return check_query_select(&query->query_content.select_query);
             break;
-        
-
+        case QUERY_UPDATE:
+            return check_query_update(&query->query_content.update_query);
+            break;
+        case QUERY_DELETE:
+            return check_query_delete(&query->query_content.delete_query);
+            break;
+        case QUERY_INSERT:
+            return check_query_insert(&query->query_content.insert_query);
+            break;
+        case QUERY_DROP_DB:
+            return check_query_drop_db(query->query_content.database_name);
+            break;
         default:
-            printf("Unsupported query code\n");//UwU
+            printf("Unsupported query code\n");
     }
     return false;
 }

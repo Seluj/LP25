@@ -225,7 +225,7 @@ Cette fonction parse une clause **where**, composée d'une liste d'au moins une 
 **Valeur de retour**
 À l'exception de la fonction `has_reached_sql_end`, chacune de ces fonctions retourne un pointeur sur le caractère de la chaîne `sql` après la fin de l'analyse du champ concerné. Toutes retournent `NULL` en cas d'échec, signifiant que la requête SQL est mal formée.
 
-## Vérification d'une requête avec la structure de la base de données
+## Tache 2 : Vérification d'une requête avec la structure de la base de données
 
 La vérification des paramètres de la requête dépend du type de requête.
 
@@ -298,7 +298,7 @@ bool is_key(char *value);
 
 Leur fonctionnement est donné en commentaires doxygen dans le fichier `check.c` envoyé avec cette partie du sujet.
 
-## Expansion de la requête
+## Tache 3 : Expansion de la requête
 
 L'expansion de la requête est nécessaire pour les requêtes dont les champs peuvent être définis incomplètement. Il s'agit des requêtes `INSERT` et `SELECT`. En effet, insert peut spécifier seulement une partie des champs à affecter, les autres étant créés avec des valeurs par défaut. Concernant la requête `SELECT`, la liste de champs à afficher peut être un sous ensemble des champs de la table (il n'y a dans ce cas rien à étendre) ou le mot-clé `*` qui signifie "tous les champs". Dans ce dernier cas, la liste de champs du `SELECT` doit être remplacée par la liste des champs de la définition de la table cible.
 
@@ -322,7 +322,7 @@ void make_default_value(field_record_t *field, char *table_name);
 
 `make_default_value` affecte la valeur par défaut à un champ en se basant sur son type.
 
-## Exécution de la requête
+## Tache 4 : Exécution de la requête
 
 L'exécution de la requête consiste à appliquer la requête au contenu de la base de données stockée sur la machine. Pour celà, un certain nombre de fonctions sont nécessaires.
 
