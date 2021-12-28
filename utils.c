@@ -14,14 +14,21 @@
  *  @return a pointer to the full path. Its content must be freed by make_full_path caller.
  */
 char *make_full_path(char *path, char *basename) {
-    int i = strlen(path);
-    if (strcmp(&path[i-1], "/") != 0) {
-      strcpy(path, "/");
-      strcat(path, basename);
+    char *full_path;
+    if (path == NULL) {
+        full_path = malloc(sizeof(char) * strlen(basename));
+        strcpy(full_path, basename);
     } else {
-      strcat(path, basename);
+        full_path = malloc(sizeof(char) * (strlen(path)+strlen(basename)));
+        strcpy(full_path, path);
+        if (path[strlen(path)-1] != '/') {
+            strcat(full_path, "/");
+            strcat(full_path, basename);
+        } else {
+            strcat(full_path, basename);
+        }
     }
-    return path;
+    return full_path;
 }
 
 /**
@@ -36,4 +43,28 @@ bool directory_exists(char *path) {
         return true;
     }
     return false;
+}
+
+/**
+* Recursive make directory
+* @param *dir - a string containing the directory name to be Create
+*/
+void _mkdir(const char *dir) {
+    char tmp[256];
+    char *p = NULL;
+    size_t len;
+
+    snprintf(tmp, sizeof(tmp), "%s", dir);
+    len = strlen(tmp);
+    if (tmp[len - 1] == '/') {
+        tmp[len - 1] = 0;
+    }
+    for (p = tmp + 1; *p; p++) {
+        if (*p == '/') {
+            *p = 0;
+            mkdir(tmp, S_IRWXU);
+            *p = '/';
+        }
+    }
+    mkdir(tmp, S_IRWXU);
 }

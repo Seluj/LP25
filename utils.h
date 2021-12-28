@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <sys/stat.h>
 
 #ifndef _UTILS_H
 #define _UTILS_H
@@ -61,5 +62,6 @@ typedef struct {
 
 char *make_full_path(char *path, char *basename);
 bool directory_exists(char *path);
+void _mkdir(const char *dir);
 
 #endif //_UTILS_H

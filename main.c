@@ -16,29 +16,34 @@ int main(int argc, char *argv[]) {
     int tmp, opt;
     char *path = NULL;
     char *db_name = NULL;
+    char *full_path = NULL;
     // Here: check parameters with getopt
     
     while ((opt = getopt(argc, argv, ":l:d:")) != -1) { 
         switch (opt) { 
-            case 'l': 
-                printf("Directory: %s\n", optarg);
-                path = optarg;
-                break; 
-            case 'd': 
-                printf("Database name: %s\n", optarg);
-                db_name = optarg;
-                break; 
-            case ':': 
+            case 'l':
+                //path = optarg;
+                path = malloc(sizeof(char) * strlen(optarg));
+                strcpy(path, optarg);
+                break;
+            case 'd':
+                db_name = malloc(sizeof(char) * strlen(optarg));
+                strcpy(db_name, optarg);
+                break;
+            case ':':
                 printf("option needs a value\n"); 
                 return EXIT_FAILURE;
-                break; 
-            case '?': 
+                break;
+            case '?':
                 printf("unknown option: %c\n", optopt);
                 return EXIT_FAILURE;
-                break; 
+                break;
         }
     }
-    
+    if (db_name == NULL) {
+        printf("You must enter a database name (with option -d)\n");
+        return EXIT_FAILURE;
+    }
     if (path != NULL) {
         if (directory_exists(path) == false) {
             printf("Path doesn't exist\n"
@@ -50,8 +55,8 @@ int main(int argc, char *argv[]) {
             printf("\n");
             fflush(stdin);
             while ((tmp != 1) && (tmp != 2)) {
-                printf("You must write yes or no\n");
-                printf("Would you want to create one ? (yes/no)\n"
+                printf("You must write 1 or 2\n");
+                printf("Would you want to create one ?\n"
             "1) yes\n"
             "2) no\n"
             "Choice:");
@@ -60,17 +65,28 @@ int main(int argc, char *argv[]) {
                 fflush(stdin);
             }
             if (tmp == 1) {
-                mkdir(path);
+                _mkdir(path);
             } else {
                 return EXIT_FAILURE;
             }
-            if (directory_exists(path)) {
+            
+            if (directory_exists(path) == false) {
                 return EXIT_FAILURE;
             }
+        } else {
+            printf("\nPath exist\n");
         }
     }
+    printf("\nAvant formule : \n");
     printf("path: %s\n", path);
     printf("Database name: %s\n", db_name);
+    printf("Full path: %s\n", full_path);
+    
+    full_path = make_full_path(path, db_name);
+    printf("\nAprès formule : \n");
+    printf("path: %s\n", path);
+    printf("Database name: %s\n", db_name);
+    printf("Full path: %s\n", full_path);
     
     char buffer[SQL_COMMAND_MAX_SIZE];
     do {
@@ -84,5 +100,8 @@ int main(int argc, char *argv[]) {
         // Here: parse SQL, check query, execute query
         
     } while (true);
+    free(full_path);
+    free(path);
+    free(db_name);
     return 0;
 }
