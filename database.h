@@ -6,6 +6,6 @@
 #define _DATABASE_H
 
 void create_db_directory(char *name);
-void recursive_rmdir(char *dirname);
+int recursive_rmdir(char *dirname);
 
 #endif //_DATABASE_H

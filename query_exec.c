@@ -10,7 +10,7 @@
 #include "database.h"
 #include "table.h"
 
-
+/*
 void recursive_rmdir(char *dirname)
 {
     if(directory_exists(path)==true)
@@ -18,7 +18,7 @@ void recursive_rmdir(char *dirname)
         remove(dirname);
     }
 
-}
+}*/
 
 void execute(query_result_t *query) {
     switch (query->query_type) {
@@ -79,4 +79,6 @@ void execute_drop_table(char *table_name) {
 }
 
 void execute_drop_database(char *db_name) {
+    chdir("..");
+    recursive_rmdir(db_name);
 }

@@ -20,10 +20,10 @@ char *get_sep_space(char *sql) {
     numb_spaces++;
     sql++;
   }
-    if (numb_spaces != 0 && *sql != '\0') { //We have to make sure we didn't exit the while because we reached the end of the string but because we found a non-space character
-      first_nonspace_char = sql;
-    }
-    return first_nonspace_char; //returns NULL if there wasn't one or a sequence of spaces before the first non-space character(unlikely scenario). Also returns NULL if there are only spaces up until the end of the string.
+  if (numb_spaces != 0 ) { 
+    first_nonspace_char = sql;
+  }
+  return first_nonspace_char; //returns NULL if there wasn't one or a sequence of spaces before the first non-space character
 }
 
 /*!
@@ -52,7 +52,7 @@ char *get_sep_space_and_char(char *sql, char c) {
 }
 
 /*!
-*@brief Function checks that the keyword in the parameters corresponds to 
+*@brief Function checks that the first word in the pointed string corresponds to the keyword in the parameters
 *@param Pointer on a specific position in a string
 *@param A specific keyword
 *@return Pointer on the character following the specific keyword or null if the keyword isn't found
@@ -61,8 +61,7 @@ char *get_keyword(char *sql, char *keyword) {
     char *after_keyword = NULL;
     char word[15];
     char first_word[15]; 
-    //Size explanation: We know the keyword will either be select, create, ... therefore we know the keyword if found should be able to fit in less than 14 cases. If it doesn't it should be assumed that the word found does not correspond to the keyword.
-    //char 
+    //Size explanation: We know the keyword will either be select, create, ... therefore we know the keyword if found should be able to fit in less than 14 cases. If it doesn't it should be assumed that the word found does not correspond to the keyword. 
     int i = 0;
     //We get the first word from the sql string and put it in capital letters
     while (*sql != ' ') {
@@ -94,13 +93,14 @@ char *get_keyword(char *sql, char *keyword) {
 *@return Pointer on the character following the value we've gathered
 */
 char *get_field_name(char *sql, char *field_name) {
+  char *after_field_name = NULL;
   while (*sql != ' ' && *sql != '\0') {
     *field_name = *sql;
     sql++;
     field_name++;
   }
-  sql++;
-  return sql;
+  after_field_name = sql;
+  return after_field_name;
 }
 
 /*!
@@ -116,21 +116,70 @@ bool has_reached_sql_end(char *sql) {
     if (*sql == '\0') {
         end = true;
     }
-    return false;
+    return end;
 }
 
 /*!
-*
-*
+*@brief Function extracts a list of fields or values (this type of list is seperated by commas)
+*@param Pointer on a specific position in a string
+*@param Pointer on a structure where we sill stock the list of fields or values we find
+*@return Pointer on the next character following the list of fields or values we've found
 */
 char *parse_fields_or_values_list(char *sql, table_record_t *result) {
-    return sql;
+  char *temp = sql;
+  get_sep_space(temp);
+  if (*temp == '(') {
+    get_sep_space_and_char(sql, '(');
+  } else if (*temp == '*') {
+    //result->fields->field_value ;
+  }else{
+    printf("ERREUR MAUVAISE SYNTAXE");
+  }
+
+  return sql;
 }
 
+/*!
+*@brief Function extracts a list of fields (this type of list is seperated by commas, however the field and field type are seperated by a space)
+*@param Pointer on a specific position in a string
+*@param Pointer on a structure where we will stock the list of fields and field types
+*@return Pointer on the next character following the list of fields
+*/
 char *parse_create_fields_list(char *sql, table_definition_t *result) {
+  char *field_name_or_type;
+  char name_or_type[150];
+  int i = 0;
+  char *temp;
+  bool insert = false;
+  result->fields_count = 0 ;
+  get_sep_space(sql);
+  if (*sql == '('){
+    sql++;
+    while (*sql != ')' && sql != NULL){
+      get_sep_space(sql);
+      get_field_name(sql, field_name_or_type);
+      while (*field_name_or_type != '\0') {
+        name_or_type[i] = *field_name_or_type;
+      }
+      strcpy(result->definitions->column_name, name_or_type);
+      get_sep_space(sql);
+      get_field_name(sql, field_name_or_type);
+      get_sep_space_and_char(sql, ',');
+      result->fields_count = result->fields_count + 1;
+      insert = true;
+    }
+  }else{
+    printf("ERREUR MAUVAISE SYNTAXE");
+  }
     return sql;
 }
 
+/*!
+*@brief Function exctract equality
+*@param 
+*@param 
+*@return Pointer on the next character following the equality  
+*/
 char *parse_equality(char *sql, field_record_t *equality) {
     return sql;
 }

@@ -64,7 +64,7 @@ bool check_query_select(update_or_select_query_t *query) {
     if (table_exists(query->table_name) == 0) {
         ret = false;
     } else {
-        table_definition_t *definition;
+        table_definition_t *definition = malloc(sizeof(table_definition_t));
         definition = get_table_definition(query->table_name, definition);
         if (query->where_clause.values.fields_count == 0 && query->set_clause.fields_count == 0) {
             ret = true;
@@ -89,6 +89,7 @@ bool check_query_select(update_or_select_query_t *query) {
                 }
             }
         }
+        free(definition);
     }
     return ret;
 }
@@ -106,7 +107,7 @@ bool check_query_update(update_or_select_query_t *query) {
     if (table_exists(query->table_name) == 0) {
         ret = false;
     } else {
-        table_definition_t *definition;
+        table_definition_t *definition = malloc(sizeof(table_definition_t));
         definition = get_table_definition(query->table_name, definition);
         if (query->set_clause.fields_count == 0) {
             if (query->where_clause.values.fields_count == 0) {
@@ -133,6 +134,7 @@ bool check_query_update(update_or_select_query_t *query) {
                 }
             }
         }
+        free(definition);
     }
 
     return ret;
@@ -167,7 +169,7 @@ bool check_query_insert(insert_query_t *query) {
     if (table_exists(query->table_name) == 0) {
         ret = false;
     } else {
-        table_definition_t *definition;
+        table_definition_t *definition = malloc(sizeof(table_definition_t));
         definition = get_table_definition(query->table_name, definition);
         if (query->fields_names.fields_count == 1) {
             if (query->fields_values.fields_count == definition->fields_count) {
@@ -189,6 +191,7 @@ bool check_query_insert(insert_query_t *query) {
                 }
             }
         }
+        free(definition);
     }
     return ret;
 }
@@ -209,7 +212,7 @@ bool check_query_delete(delete_query_t *query) {
         if (query->where_clause.values.fields_count == 0) {
             ret = true;
         } else {
-            table_definition_t *definition;
+            table_definition_t *definition = malloc(sizeof(table_definition_t));
             definition = get_table_definition(query->table_name, definition);
             if (check_value_types(&query->where_clause.values, definition)) {
                 ret = true;
@@ -263,6 +266,7 @@ bool check_query_drop_db(char *db_name) {
             ret = true;
         }
     }
+    free(tmp);
     chdir(db_name);
     return ret;
 }
@@ -299,7 +303,7 @@ bool check_fields_list(table_record_t *fields_list, table_definition_t *table_de
  * @return true if all fields belong to table and their value types are correct, false else
  */
 bool check_value_types(table_record_t *fields_list, table_definition_t *table_definition) {
-    field_definition_t *tmp;
+    field_definition_t *tmp = malloc(sizeof(field_definition_t));
     int i = 0;
     bool ret = true;
     while (i < fields_list->fields_count && ret == true) {
@@ -307,13 +311,16 @@ bool check_value_types(table_record_t *fields_list, table_definition_t *table_de
         if (tmp == NULL) {
             ret = false;
         } else {
-            if (is_value_valid(&fields_list->fields[i], tmp)) {
+            if (is_value_valid(&fields_list->fields[i], tmp) == true) {
                 i++;
             } else {
                 ret = false;
             }
         }
     }
+    
+    //free(tmp);
+
     return ret;
 }
 

@@ -156,43 +156,49 @@ void drop_table(char *table_name) {
  * @return the pointer to result, NULL if the function failed
  */
 table_definition_t *get_table_definition(char *table_name, table_definition_t *result) {
-    FILE *definition_file;
-    definition_file = open_definition_file(table_name, "r");
-    if (definition_file == NULL) {
-        return NULL;
-    } else {
-        int type_tmp, fields_count = 0;
-        char name_tmp[TEXT_LENGTH];
-        while (fields_count < MAX_FIELDS_COUNT && fscanf(definition_file, "%d %s", &type_tmp, name_tmp) != 0) {
-            switch (type_tmp) {
-                case 0:
-                    result->definitions[fields_count].column_type = TYPE_UNKNOWN;
-                    break;
-                case 1:
-                    result->definitions[fields_count].column_type = TYPE_PRIMARY_KEY;
-                    break;
-                case 2:
-                    result->definitions[fields_count].column_type = TYPE_INTEGER;
-                    break;
-                case 3:
-                    result->definitions[fields_count].column_type = TYPE_FLOAT;
-                    break;
-                case 4:
-                    result->definitions[fields_count].column_type = TYPE_TEXT;
-                    break;
-                default:
-                    return NULL;
-                    break;
-            }
-            strcpy(result->definitions[fields_count].column_name, name_tmp);
-            fields_count++;
-        }
-        if (fields_count == 0) {
+    if (table_exists(table_name)) {
+        chdir(table_name);
+        FILE *definition_file;
+        definition_file = open_definition_file(table_name, "r");
+        if (definition_file == NULL) {
             return NULL;
         } else {
-            result->fields_count = fields_count;
-            return result;
+            int type_tmp, fields_count = 0;
+            char name_tmp[TEXT_LENGTH];
+            while (fields_count < MAX_FIELDS_COUNT && fscanf(definition_file, "%d %s", &type_tmp, name_tmp) != EOF) {
+                switch (type_tmp) {
+                    case 0:
+                        result->definitions[fields_count].column_type = TYPE_UNKNOWN;
+                        break;
+                    case 1:
+                        result->definitions[fields_count].column_type = TYPE_PRIMARY_KEY;
+                        break;
+                    case 2:
+                        result->definitions[fields_count].column_type = TYPE_INTEGER;
+                        break;
+                    case 3:
+                        result->definitions[fields_count].column_type = TYPE_FLOAT;
+                        break;
+                    case 4:
+                        result->definitions[fields_count].column_type = TYPE_TEXT;
+                        break;
+                    default:
+                        return NULL;
+                        break;
+                }
+                strcpy(result->definitions[fields_count].column_name, name_tmp);
+                fields_count++;
+            }
+            if (fields_count == 0) {
+                return NULL;
+            } else {
+                result->fields_count = fields_count;
+                return result;
+            }
         }
+        chdir("..");
+    } else {
+        return NULL;
     }
 }
 
