@@ -22,6 +22,7 @@ FILE *open_index_file(char *table_name, char *mode);
 FILE *open_content_file(char *table_name, char *mode);
 FILE *open_key_file(char *table_name, char *mode);
 
+int table_exists(const char table_name[]);
 void create_table(create_query_t *table_definition);
 void drop_table(char *table_name);
 table_definition_t *get_table_definition(char *table_name, table_definition_t *result);

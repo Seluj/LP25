@@ -3,12 +3,15 @@
 #include <stdio.h>
 #include <dirent.h>
 #include <string.h>
+#include <unistd.h>
+
 
 #include "utils.h"
 #include "database.h"
 #include "sql.h"
 #include "table.h"
 #include "check.h"
+#include "expand.h"
 
 #define SQL_COMMAND_MAX_SIZE 1500
 
@@ -16,13 +19,11 @@ int main(int argc, char *argv[]) {
     int tmp, opt;
     char *path = NULL;
     char *db_name = NULL;
-    char *full_path = NULL;
     // Here: check parameters with getopt
     
     while ((opt = getopt(argc, argv, ":l:d:")) != -1) { 
         switch (opt) { 
             case 'l':
-                //path = optarg;
                 path = malloc(sizeof(char) * strlen(optarg));
                 strcpy(path, optarg);
                 break;
@@ -77,18 +78,15 @@ int main(int argc, char *argv[]) {
             printf("\nPath exist\n");
         }
     }
-    printf("\nAvant formule : \n");
-    printf("path: %s\n", path);
-    printf("Database name: %s\n", db_name);
-    printf("Full path: %s\n", full_path);
+    //full_path = make_full_path(path, db_name);
+    //printf("\nPath of the database: %s\n", full_path);
     
-    full_path = make_full_path(path, db_name);
-    printf("\nAprès formule : \n");
-    printf("path: %s\n", path);
-    printf("Database name: %s\n", db_name);
-    printf("Full path: %s\n", full_path);
+    printf("%d", chdir(path));
+    create_db_directory(db_name);
+    printf("%d", chdir(db_name));
     
     char buffer[SQL_COMMAND_MAX_SIZE];
+    query_result_t *commande = malloc(sizeof(query_result_t));
     do {
        printf("> ");
         fflush(stdin);
@@ -98,7 +96,12 @@ int main(int argc, char *argv[]) {
         if (strcmp(buffer, "exit") == 0)
             break;
         // Here: parse SQL, check query, execute query
-        
+        /*
+        commande = parse(buffer, commande);
+        if (check_query(commande)) {
+            execute
+        }
+        */
     } while (true);
     free(full_path);
     free(path);

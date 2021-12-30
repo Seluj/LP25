@@ -19,14 +19,13 @@ char *make_full_path(char *path, char *basename) {
         full_path = malloc(sizeof(char) * strlen(basename));
         strcpy(full_path, basename);
     } else {
-        full_path = malloc(sizeof(char) * (strlen(path)+strlen(basename)));
+        full_path = malloc(sizeof(char) * (strlen(path) + strlen(basename) + 1));
         strcpy(full_path, path);
         if (path[strlen(path)-1] != '/') {
             strcat(full_path, "/");
-            strcat(full_path, basename);
-        } else {
-            strcat(full_path, basename);
         }
+        strcat(full_path, basename);
+        strcat(full_path, "/");
     }
     return full_path;
 }

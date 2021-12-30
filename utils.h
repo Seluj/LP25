@@ -6,6 +6,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <sys/stat.h>
+#include <dirent.h>
 
 #ifndef _UTILS_H
 #define _UTILS_H
@@ -14,6 +15,8 @@
 #define MAX_FIELDS_COUNT 16
 
 #define MAX_TABLE_RECORD_SIZE TEXT_LENGTH*MAX_FIELDS_COUNT
+
+//char *full_path;
 
 typedef enum {
     TYPE_UNKNOWN,

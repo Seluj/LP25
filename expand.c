@@ -13,9 +13,14 @@ void expand(query_result_t *query) {
 }
 
 void expand_select(update_or_select_query_t *query) {
+    if(query->set_clause.fields_count == 1){
+
+    }
 }
 
-void expand_insert(insert_query_t *query) {//UwU
+void expand_insert(insert_query_t *query) {
+
+
 }
 
 bool is_field_in_record(table_record_t *record, char *field_name) {

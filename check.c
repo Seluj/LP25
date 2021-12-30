@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <linux/limits.h>
+#include <dirent.h>
 
 #include "table.h"
 
@@ -59,7 +60,37 @@ bool check_query(query_result_t *query) {
  * @return true if valid, false if invalid
  */
 bool check_query_select(update_or_select_query_t *query) {
-    return false;
+    bool ret = false;
+    if (table_exists(query->table_name) == 0) {
+        ret = false;
+    } else {
+        table_definition_t *definition;
+        definition = get_table_definition(query->table_name, definition);
+        if (query->where_clause.values.fields_count == 0 && query->set_clause.fields_count == 0) {
+            ret = true;
+        } else {
+            if (query->where_clause.values.fields_count != 0 && query->set_clause.fields_count == 0) {
+                if (check_value_types(&query->where_clause.values, definition)) {
+                    ret = true;
+                } else {
+                    ret = false;
+                }
+            } else if (query->where_clause.values.fields_count == 0 && query->set_clause.fields_count != 0) {
+                if (check_fields_list(&query->set_clause, definition)) {
+                    ret = true;
+                } else {
+                    ret = false;
+                }
+            } else {
+                if (check_value_types(&query->where_clause.values, definition) && check_fields_list(&query->set_clause, definition)) {
+                    ret = true;
+                } else {
+                    ret = false;
+                }
+            }
+        }
+    }
+    return ret;
 }
 
 /*!
@@ -71,7 +102,40 @@ bool check_query_select(update_or_select_query_t *query) {
  * @return true if valid, false if invalid
  */
 bool check_query_update(update_or_select_query_t *query) {
-    return false;
+    bool ret = false;
+    if (table_exists(query->table_name) == 0) {
+        ret = false;
+    } else {
+        table_definition_t *definition;
+        definition = get_table_definition(query->table_name, definition);
+        if (query->set_clause.fields_count == 0) {
+            if (query->where_clause.values.fields_count == 0) {
+                ret = true;
+            } else {
+                if (check_value_types(&query->where_clause.values, definition)) {
+                    ret = true;
+                } else {
+                    ret = false;
+                }
+            }
+        } else {
+            if (query->where_clause.values.fields_count == 0) {
+                if (check_value_types(&query->set_clause, definition)) {
+                    ret = true;
+                } else {
+                    ret = false;
+                }
+            } else {
+                if (check_value_types(&query->where_clause.values, definition) && check_value_types(&query->set_clause, definition)) {
+                    ret = true;
+                } else {
+                    ret = false;
+                }
+            }
+        }
+    }
+
+    return ret;
 }
 
 /*!
@@ -80,7 +144,11 @@ bool check_query_update(update_or_select_query_t *query) {
  * @return true if valid, false if invalid
  */
 bool check_query_create(create_query_t *query) {
-    return false;
+    if (table_exists(query->table_name) == 1) {
+        return false;
+    } else {
+        return true;
+    }
 }
 
 /*!
@@ -95,7 +163,34 @@ bool check_query_create(create_query_t *query) {
  * @return true if valid, false if invalid
  */
 bool check_query_insert(insert_query_t *query) {
-    return false;
+    bool ret = false;
+    if (table_exists(query->table_name) == 0) {
+        ret = false;
+    } else {
+        table_definition_t *definition;
+        definition = get_table_definition(query->table_name, definition);
+        if (query->fields_names.fields_count == 1) {
+            if (query->fields_values.fields_count == definition->fields_count) {
+                ret = true;
+            } else {
+                ret = false;
+            }
+        } else {
+            if (query->fields_values.fields_count != query->fields_names.fields_count) {
+                ret = false;
+            } else {
+                for (int i = 0; i < query->fields_names.fields_count; i++) {
+                    strcpy(query->fields_names.fields[i].field_value.text_value, query->fields_values.fields[i].field_value.text_value);
+                }
+                if (check_value_types(&query->fields_names, definition)) {
+                    ret = true;
+                } else {
+                    ret = false;
+                }
+            }
+        }
+    }
+    return ret;
 }
 
 /*!
@@ -107,7 +202,23 @@ bool check_query_insert(insert_query_t *query) {
  * @return true if valid, false if invalid
  */
 bool check_query_delete(delete_query_t *query) {
-    return false;
+    bool ret = false;
+    if (table_exists(query->table_name) == 0) {
+        ret = false;
+    } else {
+        if (query->where_clause.values.fields_count == 0) {
+            ret = true;
+        } else {
+            table_definition_t *definition;
+            definition = get_table_definition(query->table_name, definition);
+            if (check_value_types(&query->where_clause.values, definition)) {
+                ret = true;
+            } else {
+                ret = false;
+            }
+        }
+    }
+    return ret;
 }
 
 /*!
@@ -116,7 +227,11 @@ bool check_query_delete(delete_query_t *query) {
  * @return true if valid, false if invalid
  */
 bool check_query_drop_table(char *table_name) {
-    return false;
+    if (table_exists(table_name) == 1) {
+        return true;
+    } else {
+        return false;
+    }
 }
 
 /*!
@@ -125,7 +240,31 @@ bool check_query_drop_table(char *table_name) {
  * @return true if valid, false if invalid
  */
 bool check_query_drop_db(char *db_name) {
-    return false;
+    bool ret = false;
+    chdir("..");
+    char *tmp = malloc(sizeof(char) * strlen(db_name));
+    strcpy(tmp, db_name);
+    DIR *database;
+    struct dirent *dirent;
+    database = opendir(db_name);
+    if (database == NULL) {
+        ret = false;
+    } else {
+        dirent = readdir(database);
+        int i=0;
+        while (dirent != NULL) {
+            i++;
+            dirent = readdir(database);
+        }
+        closedir(database);
+        if (i == 0) {
+            ret = false;
+        } else {
+            ret = true;
+        }
+    }
+    chdir(db_name);
+    return ret;
 }
 
 /*!
@@ -137,7 +276,16 @@ bool check_query_drop_db(char *db_name) {
  * @return true if all fields belong to table, false else
  */
 bool check_fields_list(table_record_t *fields_list, table_definition_t *table_definition) {
-    return false;
+    int i = 0;
+    bool ret = true;
+    while (i < fields_list->fields_count && ret == true) {
+        if (find_field_definition(fields_list->fields[i].column_name, table_definition) == NULL) {
+            ret = false;
+        } else {
+            i++;
+        }
+    }
+    return ret;
 }
 
 /*!
@@ -151,7 +299,22 @@ bool check_fields_list(table_record_t *fields_list, table_definition_t *table_de
  * @return true if all fields belong to table and their value types are correct, false else
  */
 bool check_value_types(table_record_t *fields_list, table_definition_t *table_definition) {
-    return false;
+    field_definition_t *tmp;
+    int i = 0;
+    bool ret = true;
+    while (i < fields_list->fields_count && ret == true) {
+        tmp = find_field_definition(fields_list->fields[i].column_name, table_definition);
+        if (tmp == NULL) {
+            ret = false;
+        } else {
+            if (is_value_valid(&fields_list->fields[i], tmp)) {
+                i++;
+            } else {
+                ret = false;
+            }
+        }
+    }
+    return ret;
 }
 
 /*!
@@ -161,7 +324,20 @@ bool check_value_types(table_record_t *fields_list, table_definition_t *table_de
  * @return a pointer to the field definition structure if the field name exists, NULL if it doesn't.
  */
 field_definition_t *find_field_definition(char *field_name, table_definition_t *table_definition) {
-    return NULL;
+    int i = 0;
+    bool trouve = false;
+    while (i < table_definition->fields_count && trouve == false) {
+        if (strcmp(table_definition->definitions[i].column_name, field_name) == 0) {
+            trouve = true;
+        } else {
+            i++;
+        }
+    }
+    if (trouve == true) {
+        return &table_definition->definitions[i];
+    } else {
+        return NULL;
+    }
 }
 
 /*!
@@ -178,7 +354,47 @@ field_definition_t *find_field_definition(char *field_name, table_definition_t *
  * @return true if valid (and converted), false if invalid
  */
 bool is_value_valid(field_record_t *value, field_definition_t *field_definition) {
-    return false;
+    bool ret = false;
+    if (strcmp(field_definition->column_name, value->column_name) == 0){
+        switch (field_definition->column_type) {
+            case TYPE_PRIMARY_KEY:
+                if (is_key(value->field_value.text_value)) {
+                    ret = true;
+                    value->field_value.primary_key_value = strtoull(value->field_value.text_value, NULL, 10);
+                    value->field_type = TYPE_PRIMARY_KEY;
+                } else {
+                    ret = false;
+                }
+                break;
+            case TYPE_INTEGER:
+                if (is_int(value->field_value.text_value)) {
+                    ret = true;
+                    value->field_value.int_value = strtoll(value->field_value.text_value, NULL, 10);
+                    value->field_type = TYPE_INTEGER;
+                } else {
+                    ret = false;
+                }
+                break;
+            case TYPE_FLOAT:
+                if (is_float(value->field_value.text_value)) {
+                    ret = true;
+                    value->field_value.float_value = strtod(value->field_value.text_value, NULL);
+                    value->field_type = TYPE_FLOAT;
+                } else {
+                    ret = false;
+                }
+                break;
+            case TYPE_TEXT:
+                ret = true;
+                value->field_type = TYPE_TEXT;
+                break;
+            case TYPE_UNKNOWN:
+                ret = true;
+                value->field_type = TYPE_UNKNOWN;
+                break;
+        }
+    } 
+    return ret;
 }
 
 /*!
@@ -188,7 +404,14 @@ bool is_value_valid(field_record_t *value, field_definition_t *field_definition)
  * @return true if value can be converted into an integer, false if it cannot
  */
 bool is_int(char *value) {
-    return false;
+    int tmp;
+    char *reste=NULL;
+    tmp = strtoll(value, &reste, 10);
+    if (strcmp(reste, "\0") != 0) {
+        return false;
+    } else {
+        return true;
+    }
 }
 
 /*!
@@ -198,7 +421,14 @@ bool is_int(char *value) {
  * @return true if value can be converted into a double, false if it cannot
  */
 bool is_float(char *value) {
-    return false;
+    float tmp;
+    char *reste=NULL;
+    tmp = strtod(value, &reste);
+    if (strcmp(reste, "\0") != 0) {
+        return false;
+    } else {
+        return true;
+    }
 }
 
 /*!
@@ -208,5 +438,19 @@ bool is_float(char *value) {
  * @return true if value can be converted into a key, false if it cannot
  */
 bool is_key(char *value) {
-    return false;
+    bool ret = false;
+    int tmp;  
+    char *reste=NULL;
+    tmp = strtoull(value, &reste, 10);
+    if (strcmp(reste, "\0") != 0) {
+        ret = false;
+    } else {
+        if (tmp < 0) {
+            ret = false;
+        } else {
+            ret = true;
+        }
+    }
+    
+    return ret;
 }

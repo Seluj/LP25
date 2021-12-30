@@ -14,7 +14,25 @@
  * @return and pointer to a FILE type, resulting from the fopen function
  */
 FILE *open_definition_file(char *table_name, char *mode) {
-    return NULL;
+    char *file;
+    int lenth = strlen(table_name);
+    if (table_exists(table_name)) {
+        chdir(table_name);
+        file = malloc(sizeof(char) * (strlen(table_name) + strlen(".def")));
+        strcpy(file, table_name);
+        strcat(file, ".def");
+        FILE *definition_file;
+        definition_file = fopen(file, mode);
+        free(file);
+        chdir("..");
+        if (definition_file != NULL) {
+            return definition_file;
+        } else {
+            return NULL;
+        }
+    } else {
+        return NULL;
+    }
 }
 
 /*!
@@ -24,7 +42,25 @@ FILE *open_definition_file(char *table_name, char *mode) {
  * @return and pointer to a FILE type, resulting from the fopen function
  */
 FILE *open_index_file(char *table_name, char *mode) {
-    return NULL;
+    char *file;
+    int lenth = strlen(table_name);
+    if (table_exists(table_name)) {
+        chdir(table_name);
+        file = malloc(sizeof(char) * (strlen(table_name) + strlen(".idx")));
+        strcpy(file, table_name);
+        strcat(file, ".idx");
+        FILE *definition_file;
+        definition_file = fopen(file, mode);
+        free(file);
+        chdir("..");
+        if (definition_file != NULL) {
+            return definition_file;
+        } else {
+            return NULL;
+        }
+    } else {
+        return NULL;
+    }
 }
 
 /*!
@@ -34,7 +70,25 @@ FILE *open_index_file(char *table_name, char *mode) {
  * @return and pointer to a FILE type, resulting from the fopen function
  */
 FILE *open_content_file(char *table_name, char *mode) {
-    return NULL;
+    char *file;
+    int lenth = strlen(table_name);
+    if (table_exists(table_name)) {
+        chdir(table_name);
+        file = malloc(sizeof(char) * (strlen(table_name) + strlen(".data")));
+        strcpy(file, table_name);
+        strcat(file, ".data");
+        FILE *definition_file;
+        definition_file = fopen(file, mode);
+        free(file);
+        chdir("..");
+        if (definition_file != NULL) {
+            return definition_file;
+        } else {
+            return NULL;
+        }
+    } else {
+        return NULL;
+    }
 }
 
 /*!
@@ -44,7 +98,38 @@ FILE *open_content_file(char *table_name, char *mode) {
  * @return and pointer to a FILE type, resulting from the fopen function
  */
 FILE *open_key_file(char *table_name, char *mode) {
-    return NULL;
+    char *file;
+    int lenth = strlen(table_name);
+    if (table_exists(table_name)) {
+        chdir(table_name);
+        file = malloc(sizeof(char) * (strlen(table_name) + strlen(".key")));
+        strcpy(file, table_name);
+        strcat(file, ".key");
+        FILE *definition_file;
+        definition_file = fopen(file, mode);
+        free(file);
+        chdir("..");
+        if (definition_file != NULL) {
+            return definition_file;
+        } else {
+            return NULL;
+        }
+    } else {
+        return NULL;
+    }
+}
+
+/*!
+ * @brief function table_exists check if the table given exist
+ * @param table_name the table to check
+ * @return 1 if the table already exist, 0 if not
+ */
+int table_exists(const char table_name[]) {
+    if (directory_exists(table_name)) {
+        return 1;
+    } else {
+        return 2;
+    }
 }
 
 /*!
@@ -71,7 +156,44 @@ void drop_table(char *table_name) {
  * @return the pointer to result, NULL if the function failed
  */
 table_definition_t *get_table_definition(char *table_name, table_definition_t *result) {
-    return NULL;
+    FILE *definition_file;
+    definition_file = open_definition_file(table_name, "r");
+    if (definition_file == NULL) {
+        return NULL;
+    } else {
+        int type_tmp, fields_count = 0;
+        char name_tmp[TEXT_LENGTH];
+        while (fields_count < MAX_FIELDS_COUNT && fscanf(definition_file, "%d %s", &type_tmp, name_tmp) != 0) {
+            switch (type_tmp) {
+                case 0:
+                    result->definitions[fields_count].column_type = TYPE_UNKNOWN;
+                    break;
+                case 1:
+                    result->definitions[fields_count].column_type = TYPE_PRIMARY_KEY;
+                    break;
+                case 2:
+                    result->definitions[fields_count].column_type = TYPE_INTEGER;
+                    break;
+                case 3:
+                    result->definitions[fields_count].column_type = TYPE_FLOAT;
+                    break;
+                case 4:
+                    result->definitions[fields_count].column_type = TYPE_TEXT;
+                    break;
+                default:
+                    return NULL;
+                    break;
+            }
+            strcpy(result->definitions[fields_count].column_name, name_tmp);
+            fields_count++;
+        }
+        if (fields_count == 0) {
+            return NULL;
+        } else {
+            result->fields_count = fields_count;
+            return result;
+        }
+    }
 }
 
 /*!

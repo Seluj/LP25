@@ -314,7 +314,7 @@ bool is_field_in_record(table_record_t *record, char *field_name);
 void make_default_value(field_record_t *field, char *table_name);
 ```
 
-`expand` est la fonction racine qui appellera une des deux fonctions spécialisées. `expand_insert` va vérifier si la liste de champs est une `*`. Dans ce cas, elle va remplacer cette liste par la liste nominative des champs définis pour la table cible.
+`expand` est la fonction racine qui appellera une des deux fonctions spécialisées. `expand_select` va vérifier si la liste de champs est une `*`. Dans ce cas, elle va remplacer cette liste par la liste nominative des champs définis pour la table cible.
 
 `expand_insert` va parcourir la définition de la table cible et chercher les champs de la table non définis par la requête. Quand un champ est trouvé, il est ajouté à la requête avec la valeur par défaut (0 pour les valeurs numériques, chaîne vide pour le texte et identifiant suivant pour les types `primary key`).
 
