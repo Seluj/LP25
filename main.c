@@ -75,16 +75,16 @@ int main(int argc, char *argv[]) {
             if (directory_exists(path) == false) {
                 return EXIT_FAILURE;
             }
-        } else {
-            printf("\nPath exist\n");
         }
     }
     chdir(path);
     create_db_directory(db_name);
     chdir(db_name);
-
+    if (directory_exists("table_2")) {
+        recursive_rmdir("table_2");
+    }
 /* -------------------------------------- TEST -------------------------------------------- */
-
+    /*
     table_definition_t *test1 = malloc(sizeof(table_definition_t));
     test1 = get_table_definition("table_1", test1);
     field_definition_t *test2 = malloc(sizeof(field_definition_t));
@@ -131,20 +131,66 @@ int main(int argc, char *argv[]) {
         printf("\t\tChamps 0 :\t%d\t%s\n", test3->fields[0].field_type, test3->fields[0].column_name);
         printf("\t\tChamps 1 :\t%d\t%s\n", test3->fields[1].field_type, test3->fields[1].column_name);
 
-        printf("\nTeste de tous les query : \n");
-        query_result_t *test4
-        check_query(query_result_t *query)
-
     } else {
         printf("Impossible de lire le fichier\n");
     }
+    */
+    
+    /*
+    FILE *test5 = open_key_file("table_1", "w+");
+    if (test5 != NULL) {
+        int jenesaispas = 210512315;
+        fwrite(&jenesaispas, 1, sizeof(int), test5);
+        rewind(test5);
+        int *salut = malloc(sizeof(int));
+        fread(salut, 1, sizeof(int), test5);
+        printf("\n%d\n", *salut);
+        fclose(test5);
+    }
+    chdir("..");
+    FILE *test6 = open_key_file("table_1", "w+");
+    if (test6 != NULL) {
+        int jenesaispas = 210512315;
+        fwrite(&jenesaispas, 1, sizeof(int), test6);
+        rewind(test6);
+        int *salut = malloc(sizeof(int));
+        fread(salut, 1, sizeof(int), test6);
+        printf("\n%d\n", *salut);
+        fclose(test6);
+    }
+    */
 
+    /*
+    char *sql = malloc(sizeof(char)*40);
+    strcpy(sql, "Bonjour salut allo comment ca va ");
+    printf("\n%s\n", get_keyword(sql, "Bonjour"));
+    printf("\n%s\n", sql);
+    */
+
+    /*
+    create_query_t *test7 = malloc(sizeof(create_query_t));
+    strcpy(test7->table_name, "table_2");
+    test7->table_definition.fields_count = 3;
+    test7->table_definition.definitions[0].column_type = TYPE_PRIMARY_KEY;
+    strcpy(test7->table_definition.definitions[0].column_name, "salut");
+    test7->table_definition.definitions[1].column_type = TYPE_INTEGER;
+    strcpy(test7->table_definition.definitions[1].column_name, "ALLO ?");
+    test7->table_definition.definitions[2].column_type = TYPE_FLOAT;
+    strcpy(test7->table_definition.definitions[2].column_name, "Bien");
+    if (check_query_create(test7)) {
+        execute_create(test7);
+    }
+    */
 
 
 /* ------------------------------------ FIN TEST ------------------------------------------ */
 
+
+    
     char buffer[SQL_COMMAND_MAX_SIZE];
     query_result_t *commande = malloc(sizeof(query_result_t));
+    query_result_t *temp = commande;
+    
     do {
        printf("> ");
         fflush(stdin);
@@ -154,20 +200,26 @@ int main(int argc, char *argv[]) {
         if (strcmp(buffer, "exit") == 0)
             break;
         // Here: parse SQL, check query, execute query
-        
-        commande = parse(buffer, commande);
-        if (commande == NULL) {
-            continue;
+        if (strcmp(buffer, "\0") == 0) {
+            printf("OK\n");
         } else {
-            if (check_query(commande)) {
-                execute(commande);
+            commande = parse(buffer, commande);
+            if (commande == NULL) {
+                //free(commande);
+                //commande = realloc(sizeof(query_result_t));
+                commande = temp;
+                continue;
+            } else {
+                if (check_query(commande)) {
+                    execute(commande);
+                }
             }
         }
         
         
     } while (true);
     //free(full_path);
-    
+    free(commande);
     free(path);
     free(db_name);
     return 0;

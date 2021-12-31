@@ -171,7 +171,7 @@ bool check_query_insert(insert_query_t *query) {
     } else {
         table_definition_t *definition = malloc(sizeof(table_definition_t));
         definition = get_table_definition(query->table_name, definition);
-        if (query->fields_names.fields_count == 1) {
+        if (query->fields_names.fields_count == 1 && strcmp("*", query->fields_names.fields[0].column_name) == 0) {
             if (query->fields_values.fields_count == definition->fields_count) {
                 ret = true;
             } else {
@@ -181,14 +181,18 @@ bool check_query_insert(insert_query_t *query) {
             if (query->fields_values.fields_count != query->fields_names.fields_count) {
                 ret = false;
             } else {
-                for (int i = 0; i < query->fields_names.fields_count; i++) {
-                    strcpy(query->fields_names.fields[i].field_value.text_value, query->fields_values.fields[i].field_value.text_value);
-                }
-                if (check_value_types(&query->fields_names, definition)) {
-                    ret = true;
-                } else {
-                    ret = false;
-                }
+                ret = true;
+            }
+        }
+        if (ret == true) {
+            for (int i=0; i<query->fields_values.fields_count; i++) {
+                strcpy(query->fields_names.fields[i].field_value.text_value, query->fields_values.fields[i].field_value.text_value);
+            }
+            query->fields_names.fields_count = query->fields_values.fields_count;
+            if (check_value_types(&query->fields_names, definition)) {
+                ret = true;
+            } else {
+                ret = false;
             }
         }
         free(definition);

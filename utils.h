@@ -8,6 +8,8 @@
 #include <sys/stat.h>
 #include <dirent.h>
 
+#include "database.h"
+
 #ifndef _UTILS_H
 #define _UTILS_H
 

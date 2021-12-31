@@ -140,13 +140,97 @@ int table_exists(const char table_name[]) {
  * @param table_definition a pointer to the definition of the new table
  */
 void create_table(create_query_t *table_definition) {
+    int i, N;
+    int val_bin = 0;
+    int j = 0;
+    //int lenth_table_name = strlen(table_definition->table_name);
+
+    FILE *def_file = NULL;
+    FILE *key_file = NULL;
+    FILE *index_file = NULL;
+    FILE *content_file = NULL;
+
+    //on crée le dossier de la table et on se déplace dedant
+    _mkdir(table_definition->table_name);
+    chdir(table_definition->table_name);
+
+    //on crée le fichier de definition
+    def_file = open_definition_file(table_definition->table_name, "w+"); 
+
+    // on crée les fichiers d'index et de contenu
+    index_file = open_index_file(table_definition->table_name, "w+");
+    content_file = open_content_file(table_definition->table_name, "w+");
+
+    // on les referme pour les sauvegarder dans le directory nommé : table_name
+    fclose(index_file);
+    fclose(content_file);
+
+    while (j < table_definition->table_definition.fields_count) {
+        if (table_definition->table_definition.definitions[j].column_type == TYPE_PRIMARY_KEY) {
+            key_file = open_key_file(table_definition->table_name, "w+");
+            fwrite("1\n", 1, sizeof(int), key_file);
+        }
+        fprintf(def_file, "%d %s\n", table_definition->table_definition.definitions[j].column_type, table_definition->table_definition.definitions[j].column_name);
+        j++;
+    }
+
+    /*
+    for( i=0; (i<MAX_FIELDS_COUNT); i++){
+        switch (table_definition->table_definition.definitions[i].column_type){
+            case TYPE_UNKNOWN:
+                N=0;
+                break;
+            case TYPE_PRIMARY_KEY:
+                N=1;
+                key_file=open_definition_file(table_definition->table_name, "w");
+                if(key_file==NULL){
+                    printf("erreur, le fichier .key n'a pas pu être ouvert\n");
+                    break;
+                }else{
+                  val_bin=1;   
+                }
+                break;
+            case TYPE_INTEGER:
+                N=2;
+                break;
+            case TYPE_FLOAT:
+                N=3;
+                break;
+            case TYPE_TEXT:
+                N=4;
+                break;
+            default:
+                printf("erreur!\n");
+        }// end switch
+        fprintf(def_file,"%d %s\n",N,table_definition->table_definition.definitions[i].column_name);      
+    }// end for
+    */
+    chdir("..");
+    fclose(key_file);
+    fclose(def_file);
 }
 
 /*!
  * @brief function drop_table removes all files and directory related to a table
  * @param table_name the name of the dropped table.
  */
-void drop_table(char *table_name) {
+void drop_table(char *table_name){
+    if (directory_exists(table_name) == true) {
+      printf("la table %s va être supprimée\n", table_name);
+      recursive_rmdir(table_name);
+    } else {
+        printf("la table %s est déjà supprimée/n'existe pas/plus\n", table_name);
+    }
+}
+
+void drop_database(char *db_name)
+{
+    if (directory_exists(db_name)==true){
+      printf("la base de données %s va être supprimée avec toutes les tables qu'elle contient\n", db_name);
+      recursive_rmdir(db_name);
+    }else{
+        printf("la base de données  %s est déjà supprimée/n'existe pas/plus\n", db_name);
+    }
 }
 
 /*!

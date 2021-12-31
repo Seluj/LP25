@@ -48,8 +48,12 @@ void execute(query_result_t *query) {
     }
 }
 
-void execute_create(create_query_t *query) {
+void execute_create(create_query_t *query){
+    create_table(query);
 }
+
+
+
 
 void execute_insert(insert_query_t *query) {
     add_row_to_table(query->table_name, &query->fields_names);
@@ -61,12 +65,14 @@ void execute_update(update_or_select_query_t *query) {}
 
 void execute_delete(delete_query_t *query) {
     if (query->where_clause.values.fields_count == 0) { // No where clause: clear table
+        chdir(query->table_name);
         FILE *data_file = open_content_file(query->table_name, "wb");
         if (data_file)
             fclose(data_file);
         FILE *index_file = open_index_file(query->table_name, "wb");
         if (index_file)
             fclose(index_file);
+        chdir("..");
     } else {
         //
     }
@@ -79,6 +85,5 @@ void execute_drop_table(char *table_name) {
 }
 
 void execute_drop_database(char *db_name) {
-    chdir("..");
-    recursive_rmdir(db_name);
+  drop_database(db_name);
 }
