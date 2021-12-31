@@ -270,22 +270,22 @@ char *parse_set_clause(char *sql, table_record_t *result) {
 *@return Pointer on the next character following the equality  
 */
 char *parse_where_clause(char *sql, filter_t *filter) {
-  char name[150];
-  char *pointer_name = &name[0];
-  char *temp;
-  sql = get_keyword( sql, "WHERE");
-  if (sql != NULL) {
-    sql = parse_equality(sql, &filter->values.fields[0]);
-    temp = get_field_name(sql, pointer_name);
-    if (temp == NULL) {
-      return NULL;
-    } else {
+    char name[150];
+    char *pointer_name = &name[0];
+    char *temp;
+    sql = get_keyword( sql, "WHERE");
+    if (sql != NULL) {
+            sql = parse_equality(sql, &filter->values.fields[0]);
+            temp = get_field_name(sql, pointer_name);
+            if (temp == NULL) {
+            return NULL;
+        } else {
 
+        }
+    } else {
+        return NULL;
     }
-  } else {
-    return NULL;
-  }
-  return sql;
+    return sql;
 }// DONE
 
 /*!
@@ -295,63 +295,65 @@ char *parse_where_clause(char *sql, filter_t *filter) {
 *@return Pointer on the structure where the different query parameters are stored
 */
 query_result_t *parse(char *sql, query_result_t *result) {
-  if (sql != NULL && *sql != '\0') {
-    if (get_keyword(sql, "SELECT") != NULL) {
-      sql = get_keyword(sql, "SELECT");
-      printf("%s\n", sql);
-     result->query_type = 3;
-     printf("\n1\n");
-     return parse_select(sql, result); 
-    } else if (get_keyword(sql, "INSERT") != NULL) {
-      sql = get_keyword(sql, "INSERT");
-      if (get_keyword(sql, "INTO") != NULL) {
-        sql = get_keyword(sql, "INTO");
-        result->query_type = QUERY_INSERT;
-        return parse_insert(sql, result);
-      } else {
-        return NULL;
-      }
-    } else if (get_keyword(sql, "CREATE") != NULL) {
-      sql = get_keyword(sql, "CREATE");
-      if (get_keyword(sql, "TABLE") != NULL) {
-        result->query_type = QUERY_CREATE_TABLE;
-        sql = get_keyword(sql, "TABLE");
-        return parse_create(sql, result);
-      } else {
-        return NULL;
-      }
-    } else if (get_keyword(sql, "UPDATE") != NULL) {
-      result->query_type = QUERY_UPDATE;
-      sql = get_keyword(sql, "UPDATE");
-      return parse_update(sql, result);
-    } else if (get_keyword(sql, "DELETE") != NULL) {
-      sql = get_keyword(sql, "DELETE");
-      if (get_keyword(sql, "FROM") != NULL) {
-        result->query_type = QUERY_DELETE;
-        sql = get_keyword(sql, "FROM");
-        return parse_delete(sql, result);
-      } else {
-        return NULL;
-      }
-    } else if (get_keyword(sql, "DROP") != NULL) {
-      sql = get_keyword(sql, "DROP");
-      if (get_keyword(sql, "TABLE") != NULL) {
-        result->query_type = QUERY_DROP_TABLE;
-        sql = get_keyword(sql, "TABLE");
-        return parse_drop_table(sql, result);
-      } else if (get_keyword(sql, "DATABASE") != NULL || get_keyword(sql, "DB") != NULL) {
-        result->query_type = QUERY_DROP_DB;
-        sql = get_keyword(sql, "DATABASE");
-        return parse_drop_db(sql, result);
-      } else {
-        return NULL;
-      }
+    if (sql != NULL && *sql != '\0') {
+        if (get_keyword(sql, "SELECT") != NULL) {
+            sql = get_keyword(sql, "SELECT");
+            printf("%s\n", sql);
+            result->query_type = 3;
+            printf("\n1\n");
+            return parse_select(sql, result); 
+        } else if (get_keyword(sql, "INSERT") != NULL) {
+            sql = get_keyword(sql, "INSERT");
+            if (get_keyword(sql, "INTO") != NULL) {
+                sql = get_keyword(sql, "INTO");
+                result->query_type = QUERY_INSERT;
+                return parse_insert(sql, result);
+            } else {
+                return NULL;
+            }
+        } else if (get_keyword(sql, "CREATE") != NULL) {
+            sql = get_keyword(sql, "CREATE");
+            if (get_keyword(sql, "TABLE") != NULL) {
+                result->query_type = QUERY_CREATE_TABLE;
+                sql = get_keyword(sql, "TABLE");
+                return parse_create(sql, result);
+            } else {
+                return NULL;
+            }
+        } else if (get_keyword(sql, "UPDATE") != NULL) {
+            result->query_type = QUERY_UPDATE;
+            sql = get_keyword(sql, "UPDATE");
+            return parse_update(sql, result);
+        } else if (get_keyword(sql, "DELETE") != NULL) {
+            sql = get_keyword(sql, "DELETE");
+            if (get_keyword(sql, "FROM") != NULL) {
+                result->query_type = QUERY_DELETE;
+                sql = get_keyword(sql, "FROM");
+                return parse_delete(sql, result);
+            } else {
+                return NULL;
+            }
+        } else if (get_keyword(sql, "DROP") != NULL) {
+            sql = get_keyword(sql, "DROP");
+            if (get_keyword(sql, "TABLE") != NULL) {
+                result->query_type = QUERY_DROP_TABLE;
+                sql = get_keyword(sql, "TABLE");
+                return parse_drop_table(sql, result);
+            } else if (get_keyword(sql, "DATABASE") != NULL || get_keyword(sql, "DB") != NULL) {
+                result->query_type = QUERY_DROP_DB;
+                sql = get_keyword(sql, "DATABASE");
+                return parse_drop_db(sql, result);
+            } else {
+                return NULL;
+            }
+            printf("\n1\n");
+        } else {
+            printf("\n1\n");
+            return NULL;
+        }
     } else {
-      return NULL;
+        return NULL;
     }
-  } else {
-    return NULL;
-  }
 }
 
 /*!
@@ -372,10 +374,26 @@ query_result_t *parse_select(char *sql, query_result_t *result) {
 *@return Pointer on the structure where the different query parameters are stored
 */
 query_result_t *parse_create(char *sql, query_result_t *result) {
+    char table_name[50];
+    int i = 0;
+    if (get_sep_space(sql) != NULL) {
+        sql = get_sep_space(sql);
+    }
+    while (i < 50 && get_sep_space(sql) == NULL) {
+        table_name[i] = *sql;
+        i++;
+        sql++;
+    }
+    if (i == 50) {
+        return NULL;
+    } else {
+        strcpy(result->query_content.create_query.table_name, table_name);
+        parse_create_fields_list(sql, &result->query_content.create_query.table_definition);
+    }
 
-  //result->query_content.database_name = ;
-  parse_create_fields_list(sql, &result->query_content.create_query.table_definition);
-  return result;
+    //result->query_content.database_name = ;
+    //parse_create_fields_list(sql, &result->query_content.create_query.table_definition);
+    return result;
 }
 
 /*!

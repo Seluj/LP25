@@ -192,6 +192,7 @@ int main(int argc, char *argv[]) {
     query_result_t *temp = commande;
     
     do {
+        commande = temp;
        printf("> ");
         fflush(stdin);
         if (fgets(buffer, SQL_COMMAND_MAX_SIZE, stdin) == NULL)
@@ -204,10 +205,8 @@ int main(int argc, char *argv[]) {
             printf("OK\n");
         } else {
             commande = parse(buffer, commande);
+            printf("\n1\n");
             if (commande == NULL) {
-                //free(commande);
-                //commande = realloc(sizeof(query_result_t));
-                commande = temp;
                 continue;
             } else {
                 if (check_query(commande)) {
