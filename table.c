@@ -18,7 +18,7 @@ FILE *open_definition_file(char *table_name, char *mode) {
     int lenth = strlen(table_name);
     if (table_exists(table_name)) {
         chdir(table_name);
-        file = malloc(sizeof(char) * (strlen(table_name) + strlen(".def")));
+        file = malloc(sizeof(char) * (lenth + strlen(".def")));
         strcpy(file, table_name);
         strcat(file, ".def");
         FILE *definition_file;
@@ -46,7 +46,7 @@ FILE *open_index_file(char *table_name, char *mode) {
     int lenth = strlen(table_name);
     if (table_exists(table_name)) {
         chdir(table_name);
-        file = malloc(sizeof(char) * (strlen(table_name) + strlen(".idx")));
+        file = malloc(sizeof(char) * (lenth + strlen(".idx")));
         strcpy(file, table_name);
         strcat(file, ".idx");
         FILE *definition_file;
@@ -74,7 +74,7 @@ FILE *open_content_file(char *table_name, char *mode) {
     int lenth = strlen(table_name);
     if (table_exists(table_name)) {
         chdir(table_name);
-        file = malloc(sizeof(char) * (strlen(table_name) + strlen(".data")));
+        file = malloc(sizeof(char) * (lenth + strlen(".data")));
         strcpy(file, table_name);
         strcat(file, ".data");
         FILE *definition_file;
@@ -102,7 +102,7 @@ FILE *open_key_file(char *table_name, char *mode) {
     int lenth = strlen(table_name);
     if (table_exists(table_name)) {
         chdir(table_name);
-        file = malloc(sizeof(char) * (strlen(table_name) + strlen(".key")));
+        file = malloc(sizeof(char) * (lenth + strlen(".key")));
         strcpy(file, table_name);
         strcat(file, ".key");
         FILE *definition_file;
@@ -125,10 +125,12 @@ FILE *open_key_file(char *table_name, char *mode) {
  * @return 1 if the table already exist, 0 if not
  */
 int table_exists(const char table_name[]) {
-    if (directory_exists(table_name)) {
+    char *table = malloc(sizeof(char) * strlen(table_name));
+    strcpy(table, table_name);
+    if (directory_exists(table)) {
         return 1;
     } else {
-        return 2;
+        return 0;
     }
 }
 
@@ -140,71 +142,31 @@ int table_exists(const char table_name[]) {
  * @param table_definition a pointer to the definition of the new table
  */
 void create_table(create_query_t *table_definition) {
-    int i, N;
-    int val_bin = 0;
-    int j = 0;
-    //int lenth_table_name = strlen(table_definition->table_name);
+    int i = 0;
 
-    FILE *def_file = NULL;
-    FILE *key_file = NULL;
-    FILE *index_file = NULL;
-    FILE *content_file = NULL;
+    FILE *def_file;
+    FILE *key_file;
+    FILE *index_file;
+    FILE *content_file;
 
-    //on crée le dossier de la table et on se déplace dedant
     _mkdir(table_definition->table_name);
     chdir(table_definition->table_name);
 
-    //on crée le fichier de definition
     def_file = open_definition_file(table_definition->table_name, "w+"); 
-
-    // on crée les fichiers d'index et de contenu
     index_file = open_index_file(table_definition->table_name, "w+");
     content_file = open_content_file(table_definition->table_name, "w+");
 
-    // on les referme pour les sauvegarder dans le directory nommé : table_name
     fclose(index_file);
     fclose(content_file);
 
-    while (j < table_definition->table_definition.fields_count) {
-        if (table_definition->table_definition.definitions[j].column_type == TYPE_PRIMARY_KEY) {
+    while (i < table_definition->table_definition.fields_count) {
+        if (table_definition->table_definition.definitions[i].column_type == TYPE_PRIMARY_KEY) {
             key_file = open_key_file(table_definition->table_name, "w+");
             fwrite("1\n", 1, sizeof(int), key_file);
         }
-        fprintf(def_file, "%d %s\n", table_definition->table_definition.definitions[j].column_type, table_definition->table_definition.definitions[j].column_name);
-        j++;
+        fprintf(def_file, "%d %s\n", table_definition->table_definition.definitions[i].column_type, table_definition->table_definition.definitions[i].column_name);
+        i++;
     }
-
-    /*
-    for( i=0; (i<MAX_FIELDS_COUNT); i++){
-        switch (table_definition->table_definition.definitions[i].column_type){
-            case TYPE_UNKNOWN:
-                N=0;
-                break;
-            case TYPE_PRIMARY_KEY:
-                N=1;
-                key_file=open_definition_file(table_definition->table_name, "w");
-                if(key_file==NULL){
-                    printf("erreur, le fichier .key n'a pas pu être ouvert\n");
-                    break;
-                }else{
-                  val_bin=1;   
-                }
-                break;
-            case TYPE_INTEGER:
-                N=2;
-                break;
-            case TYPE_FLOAT:
-                N=3;
-                break;
-            case TYPE_TEXT:
-                N=4;
-                break;
-            default:
-                printf("erreur!\n");
-        }// end switch
-        fprintf(def_file,"%d %s\n",N,table_definition->table_definition.definitions[i].column_name);      
-    }// end for
-    */
     chdir("..");
     fclose(key_file);
     fclose(def_file);
@@ -214,23 +176,10 @@ void create_table(create_query_t *table_definition) {
  * @brief function drop_table removes all files and directory related to a table
  * @param table_name the name of the dropped table.
  */
-void drop_table(char *table_name){
-    if (directory_exists(table_name) == true) {
-      printf("la table %s va être supprimée\n", table_name);
-      recursive_rmdir(table_name);
-    } else {
-        printf("la table %s est déjà supprimée/n'existe pas/plus\n", table_name);
-    }
-}
-
-void drop_database(char *db_name)
-{
-    if (directory_exists(db_name)==true){
-      printf("la base de données %s va être supprimée avec toutes les tables qu'elle contient\n", db_name);
-      recursive_rmdir(db_name);
-    }else{
-        printf("la base de données  %s est déjà supprimée/n'existe pas/plus\n", db_name);
-    }
+void drop_table(char *table_name) {
+    printf("la table %s va être supprimée\n", table_name);
+    recursive_rmdir(table_name);
+    
 }
 
 /*!
@@ -295,6 +244,23 @@ table_definition_t *get_table_definition(char *table_name, table_definition_t *r
  */
 uint16_t compute_record_length(table_definition_t *definition) {
     uint16_t length = 0;
+    for (int i=0; i<definition->fields_count; i++) {
+        switch (definition->definitions[i].column_type) {
+            case TYPE_TEXT:
+                length += 150;
+                break;
+            case TYPE_INTEGER:
+                length += sizeof(long long);
+                break;
+            case TYPE_FLOAT:
+                length += sizeof(double);
+                break;
+            case TYPE_PRIMARY_KEY:
+                length += sizeof(unsigned long long);
+            default:
+                break;
+        }
+    }
     return length;
 }
 

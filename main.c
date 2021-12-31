@@ -191,6 +191,7 @@ int main(int argc, char *argv[]) {
     query_result_t *commande = malloc(sizeof(query_result_t));
     query_result_t *temp = commande;
     
+    printf("Attention: Le code fourni n'est pas terminé, seul quelques fonctions ont été implémentées mais ne suifisent pas a faire fonctionner l'ensemble du programme");
     do {
         commande = temp;
        printf("> ");

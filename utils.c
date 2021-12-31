@@ -58,7 +58,7 @@ void _mkdir(const char *dir) {
     if (tmp[len - 1] == '/') {
         tmp[len - 1] = 0;
     }
-    for (p = tmp + 1; *p; p++) {
+    for (p=tmp + 1; *p; p++) {
         if (*p == '/') {
             *p = 0;
             mkdir(tmp, S_IRWXU);

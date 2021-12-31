@@ -307,7 +307,7 @@ bool check_fields_list(table_record_t *fields_list, table_definition_t *table_de
  * @return true if all fields belong to table and their value types are correct, false else
  */
 bool check_value_types(table_record_t *fields_list, table_definition_t *table_definition) {
-    field_definition_t *tmp = malloc(sizeof(field_definition_t));
+    field_definition_t *tmp;
     int i = 0;
     bool ret = true;
     while (i < fields_list->fields_count && ret == true) {
@@ -322,9 +322,6 @@ bool check_value_types(table_record_t *fields_list, table_definition_t *table_de
             }
         }
     }
-    
-    //free(tmp);
-
     return ret;
 }
 
@@ -400,7 +397,7 @@ bool is_value_valid(field_record_t *value, field_definition_t *field_definition)
                 value->field_type = TYPE_TEXT;
                 break;
             case TYPE_UNKNOWN:
-                ret = true;
+                ret = false;
                 value->field_type = TYPE_UNKNOWN;
                 break;
         }
@@ -415,9 +412,8 @@ bool is_value_valid(field_record_t *value, field_definition_t *field_definition)
  * @return true if value can be converted into an integer, false if it cannot
  */
 bool is_int(char *value) {
-    int tmp;
-    char *reste=NULL;
-    tmp = strtoll(value, &reste, 10);
+    char *reste = NULL;
+    strtoll(value, &reste, 10);
     if (strcmp(reste, "\0") != 0) {
         return false;
     } else {
@@ -432,9 +428,8 @@ bool is_int(char *value) {
  * @return true if value can be converted into a double, false if it cannot
  */
 bool is_float(char *value) {
-    float tmp;
-    char *reste=NULL;
-    tmp = strtod(value, &reste);
+    char *reste = NULL;
+    strtod(value, &reste);
     if (strcmp(reste, "\0") != 0) {
         return false;
     } else {
@@ -450,8 +445,8 @@ bool is_float(char *value) {
  */
 bool is_key(char *value) {
     bool ret = false;
-    int tmp;  
-    char *reste=NULL;
+    int tmp;
+    char *reste = NULL;
     tmp = strtoull(value, &reste, 10);
     if (strcmp(reste, "\0") != 0) {
         ret = false;
@@ -462,6 +457,5 @@ bool is_key(char *value) {
             ret = true;
         }
     }
-    
     return ret;
 }

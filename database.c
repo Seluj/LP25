@@ -32,9 +32,9 @@ int recursive_rmdir(char *dirname) {
             size_t len;
 
             /* Skip the names "." and ".." as we don't want to recurse on them. */
-            if (!strcmp(p->d_name, ".") || !strcmp(p->d_name, ".."))
+            if (!strcmp(p->d_name, ".") || !strcmp(p->d_name, "..")) {
                 continue;
-
+            }
             len = path_len + strlen(p->d_name) + 2; 
             buf = malloc(len);
 
@@ -43,10 +43,11 @@ int recursive_rmdir(char *dirname) {
 
                 snprintf(buf, len, "%s/%s", dirname, p->d_name);
                 if (!stat(buf, &statbuf)) {
-                    if (S_ISDIR(statbuf.st_mode))
+                    if (S_ISDIR(statbuf.st_mode)) {
                         r2 = recursive_rmdir(buf);
-                    else
+                    } else {
                         r2 = unlink(buf);
+                    }
                 }
                 free(buf);
             }
@@ -54,9 +55,8 @@ int recursive_rmdir(char *dirname) {
         }
         closedir(d);
     }
-
-    if (!r)
+    if (!r) {
         r = rmdir(dirname);
-
+    }
     return r;
 }
