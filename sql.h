@@ -54,7 +54,7 @@ typedef struct {
         update_or_select_query_t select_query;
     } query_content;
 } query_result_t;
-char *get_keyword(char *sql, char *keyword);
+
 query_result_t *parse(char *sql, query_result_t *result);
 query_result_t *parse_select(char *sql, query_result_t *result);
 query_result_t *parse_create(char *sql, query_result_t *result);

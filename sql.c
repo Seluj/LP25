@@ -15,15 +15,15 @@
 */
 char *get_sep_space(char *sql) {
     int numb_spaces = 0;
-    while (*sql != ';' && *sql == ' ') {
+    while (/**sql != ';' &&*/ *sql == ' ') {
         numb_spaces++;
         sql++;
     }
-    if (numb_spaces != 0 ) {
+    //if (numb_spaces != 0 ) {
         return sql;
-    } else {
+    /*} else {
         return NULL;
-    }
+    }*/
 }
 
 /*!
@@ -33,9 +33,11 @@ char *get_sep_space(char *sql) {
 *@return Pointer on the next non-space character following the character c surrounded or not by sequences of spaces.
 */
 char *get_sep_space_and_char(char *sql, char c) {
-    while (*sql == ' ') {
+    while (*sql == ' ' || *sql == c) {
         sql++;
     }
+    return sql;
+    /*
     //We check that the next non-space character is the one we are looking for
     if (*sql == c) {
         sql++;
@@ -45,7 +47,7 @@ char *get_sep_space_and_char(char *sql, char c) {
         return sql;
     } else {
         return NULL;
-    }
+    }*/
 }
 
 /*!
@@ -58,8 +60,13 @@ char *get_keyword(char *sql, char *keyword) {
     char word[50];
     char first_word[50]; 
     int i = 0;
+    for (int j=0; j<50; j++) {
+        word[j] = '\0';
+        first_word[j] = '\0';
+    }
+    sql = get_sep_space(sql);
     //We get the first word from the sql string and put it in capital letters
-    while (*sql != ' ') {
+    while (i < 50 && *sql != ' ') {
         first_word[i] = toupper(*sql);
         i++;
         sql++;
@@ -67,14 +74,14 @@ char *get_keyword(char *sql, char *keyword) {
     first_word[i] = ';';
     //We also put the keyword in capital letters for safe measures
     i = 0;
-    while (*keyword != ';') {
+    while (*keyword != '\0') {
         word[i] = toupper(*keyword);
         i++;
         keyword++;
     }
     word[i] = ';';
     if (strcmp(word, first_word) == 0) {
-        sql++;
+        sql = get_sep_space(sql);
         return sql;
     } else {
         return NULL;
@@ -88,15 +95,22 @@ char *get_keyword(char *sql, char *keyword) {
 *@return Pointer on the character following the value we've gathered
 */
 char *get_field_name(char *sql, char *field_name) {
-    char *temp = sql;
-    temp = get_sep_space(temp);
-    if (temp != NULL) {
-        sql = temp;
-    }
-    while (*sql != ' ' && *sql != ';') {
-        *field_name = *sql;
+    sql = get_sep_space(sql);
+    // 36 corresponds to '
+    if (*sql == 39) {
         sql++;
-        field_name++;
+        while (*sql != 39) {
+            *field_name = *sql;
+            sql++;
+            field_name++;
+        }
+        sql++;
+    } else {
+        while (*sql != ' ' && *sql != ';' && *sql != ')' && *sql != ',') {
+            *field_name = *sql;
+            sql++;
+            field_name++;
+        }
     }
     return sql;
 }
@@ -108,9 +122,13 @@ char *get_field_name(char *sql, char *field_name) {
 */
 bool has_reached_sql_end(char *sql) {
     bool end = false;
+    /*
     while (*sql == ' ') {
         sql++;
     }
+    can be replace by :
+    */
+    sql = get_sep_space(sql);
     if (*sql == ';') {
         end = true;
     }
@@ -130,11 +148,13 @@ char *parse_fields_or_values_list(char *sql, table_record_t *result) {
     char *temp;
     bool end = false;
     bool name = false; //Indicates if the list is a name or value according to the presence or not of parentheses
-    result->fields_count = 0 ;
-    temp = get_sep_space(sql);
+    result->fields_count = 0;
+    sql = get_sep_space(sql);
+    /*
     if (temp != NULL) {
         sql = temp;
     }
+    */
     if (*sql == '('){
         sql++;
         name = true;
@@ -168,44 +188,63 @@ char *parse_fields_or_values_list(char *sql, table_record_t *result) {
 */
 char *parse_create_fields_list(char *sql, table_definition_t *result) {
     char name_or_type[150];
+    for (int j=0; j<150; j++) {
+        name_or_type[j]='\0';
+    }
     char *field_name_or_type = &name_or_type[0];
+    field_type_t type; 
     int i;
     char *temp ;
-    result->fields_count = 0 ;
-    temp = get_sep_space(sql);
+    result->fields_count = 0;
+    sql = get_sep_space(sql);
     if (temp != NULL) {
         sql = temp;
     }
     if (*sql == '(') {
         sql++;
-        while (*sql != ')' && sql != NULL) {
+        while (has_reached_sql_end(sql) == false && *sql != ')'/*sql != NULL*/) {
             //First we gather the field name
-            sql = get_field_name(sql, field_name_or_type);
-            if (sql != NULL) {
-                strcpy(result->definitions->column_name, name_or_type);
+            sql = get_field_name(sql, name_or_type);
+            //if (sql != NULL) {
+                strcpy(result->definitions[result->fields_count].column_name, name_or_type);
+                for (int j=0; j<150; j++) {
+                    name_or_type[j]='\0';
+                }
                 //Then we gather the field type
                 sql = get_field_name(sql, field_name_or_type);
-                if (sql != NULL) {
+                printf("%s\n", name_or_type);
+                //if (sql != NULL) {
                     i = 0;
-                    while (name_or_type[i] != ';') {
+                    while (name_or_type[i] != '\0') {
                         name_or_type[i] = toupper(name_or_type[i]);
                         i++;
                     }
-                    if (strcmp(name_or_type,"INT") == 0) {
-                        result->definitions->column_type = TYPE_INTEGER;
-                    } else if (strcmp(name_or_type,"PRIMARY KEY") == 0) {
-                        result->definitions->column_type = TYPE_PRIMARY_KEY;
-                    } else if (strcmp(name_or_type,"FLOAT") == 0) {
-                        result->definitions->column_type = TYPE_FLOAT;
-                    } else if (strcmp(name_or_type,"TEXT") == 0) {
-                        result->definitions->column_type = TYPE_TEXT;
+                    if (strcmp(name_or_type, "INT") == 0) {
+                        type = TYPE_INTEGER;
+                        //result->definitions->column_type = TYPE_INTEGER;
+                    } else if (strcmp(name_or_type, "PRIMARY KEY") == 0) {
+                        type = TYPE_PRIMARY_KEY;
+                        //result->definitions->column_type = TYPE_PRIMARY_KEY;
+                    } else if (strcmp(name_or_type, "FLOAT") == 0) {
+                        type = TYPE_FLOAT;
+                        //result->definitions->column_type = TYPE_FLOAT;
+                    } else if (strcmp(name_or_type, "TEXT") == 0) {
+                        type = TYPE_TEXT;
+                        //result->definitions->column_type = TYPE_TEXT;
                     } else {
-                        return NULL;
+                        type = TYPE_UNKNOWN;
+                        //result->definitions->column_type = TYPE_UNKNOWN;
+                        //return NULL;
+                    }
+                    for (int j=0; j<150; j++) {
+                        name_or_type[j]='\0';
                     }
                     //We go on to the next field name and type [if there is one of course]
-                    temp = get_sep_space_and_char(sql, ',');
+                    sql = get_sep_space_and_char(sql, ',');
+                    /*
                     if (temp == NULL) {
-                        temp = get_sep_space(sql);
+                        temp = get_sep_space(sql);printf("\n%s\n", temp);
+                        printf("\n1\n");
                         if (*temp == ')') {
                             sql = temp;
                         } else {
@@ -215,22 +254,29 @@ char *parse_create_fields_list(char *sql, table_definition_t *result) {
                         }
                     } else {
                         sql = temp;
-                    }
-                    result->fields_count = result->fields_count + 1;
-                } else {
+                    }*/
+                    result->definitions[result->fields_count].column_type = type;
+                    result->fields_count++; //= result->fields_count + 1;
+                /*} else {
                     return NULL;
-                }
-            } else {
+                }*/
+            /*} else {
                 return NULL;
-            }
+            }*/
         }
+        //result->fields_count = fields_count;
     } else {
+        printf("Les champs donnés ne sont pas correctement notés\n");
         return NULL;
     }
     if (*sql == ')') {
-        sql++;
+        sql = get_sep_space_and_char(sql, ')');
+        printf("\n%s\n", sql);
+        return sql;
+    } else {
+        printf("\nClose parentheses is missing\n");
+        return NULL;
     }
-    return sql;
 }
 
 /*!
@@ -297,7 +343,7 @@ char *parse_where_clause(char *sql, filter_t *filter) {
 query_result_t *parse(char *sql, query_result_t *result) {
   char *temp = sql;
   bool comma;
-  while (*temp != ';' || *temp != '\0') {
+  while (*temp != ';' && *temp != '\0') {
     temp++;
   }
   if (*temp == ';') {
@@ -305,19 +351,18 @@ query_result_t *parse(char *sql, query_result_t *result) {
   } else {
     comma = false;
   }
-  if (sql != NULL && *sql != '\0' && comma == true) {
+  printf("Commande entrée : \n\t%s\n\n", sql);
+  if (/*sql != NULL && *sql != '\0' &&*/ comma == true) {
     if (get_keyword(sql, "SELECT") != NULL) {
       sql = get_keyword(sql, "SELECT");
-      printf("%s\n", sql);
       result->query_type = 3;
-      printf("\n1\n");
       return parse_select(sql, result); 
     } else if (get_keyword(sql, "INSERT") != NULL) {
       sql = get_keyword(sql, "INSERT");
       if (get_keyword(sql, "INTO") != NULL) {
-      sql = get_keyword(sql, "INTO");
-      result->query_type = QUERY_INSERT;
-      return parse_insert(sql, result);
+        sql = get_keyword(sql, "INTO");
+        result->query_type = QUERY_INSERT;
+        return parse_insert(sql, result);
       } else {
         return NULL;
       }
@@ -326,8 +371,10 @@ query_result_t *parse(char *sql, query_result_t *result) {
       if (get_keyword(sql, "TABLE") != NULL) {
         result->query_type = QUERY_CREATE_TABLE;
         sql = get_keyword(sql, "TABLE");
-        return parse_create(sql, result);
+        result = parse_create(sql, result);
+        return result;
       } else {
+          printf("Create found but table is missing\n");
         return NULL;
       }
     } else if (get_keyword(sql, "UPDATE") != NULL) {
@@ -356,12 +403,11 @@ query_result_t *parse(char *sql, query_result_t *result) {
       } else {
         return NULL;
       }
-      printf("\n1\n");
     } else {
-      printf("\n1\n");
       return NULL;
     }
   } else {
+      printf("Comma is missing\n");
     return NULL;
   }
 }
@@ -385,22 +431,35 @@ query_result_t *parse_select(char *sql, query_result_t *result) {
 */
 query_result_t *parse_create(char *sql, query_result_t *result) {
     char table_name[50];
-    int i = 0;
-    if (get_sep_space(sql) != NULL) {
-        sql = get_sep_space(sql);
+    for (int k=0; k<50; k++) {
+        table_name[k] = '\0';
     }
+    //char *table_name_tmp = &table_name[0];
+    int i = 0;
+    //if (get_sep_space(sql) != NULL) {
+        sql = get_sep_space(sql);
+    //}
+    /*
     while (i < 50 && get_sep_space(sql) == NULL) {
         table_name[i] = *sql;
         i++;
         sql++;
     }
+    */
+    sql = get_field_name(sql, table_name);
     if (i == 50) {
         return NULL;
     } else {
         strcpy(result->query_content.create_query.table_name, table_name);
-        parse_create_fields_list(sql, &result->query_content.create_query.table_definition);
-        return result;
+        sql = parse_create_fields_list(sql, &result->query_content.create_query.table_definition);
+        //printf("\n%d\n", result->query_content.create_query.table_definition.fields_count);
+        if (sql == NULL) {
+            return NULL;
+        } else {
+            return result;
+        }
     }
+
 }
 
 /*!

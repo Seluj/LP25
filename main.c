@@ -85,13 +85,15 @@ int main(int argc, char *argv[]) {
     }
 
     char buffer[SQL_COMMAND_MAX_SIZE];
+    //allocation de la mémoire dynamiquement
     query_result_t *commande = malloc(sizeof(query_result_t));
+    //sauvegarde de la zone mémoire allouée
     query_result_t *temp = commande;
     
-    printf("\nAttention: Le code fourni n'est pas terminé, seul quelques fonctions ont été implémentées mais ne suifisent pas a faire fonctionner l'ensemble du programme\n");
+    printf("\nAttention: Le code fourni n'est pas terminé, seul quelques fonctions ont été implémentées mais ne suiffisent pas a faire fonctionner l'ensemble du programme\n");
     do {
-        commande = temp;
-       printf("> ");
+        
+        printf("> ");
         fflush(stdin);
         if (fgets(buffer, SQL_COMMAND_MAX_SIZE, stdin) == NULL)
             continue;
@@ -100,15 +102,21 @@ int main(int argc, char *argv[]) {
             break;
         // Here: parse SQL, check query, execute query
         if (strcmp(buffer, "\0") == 0) {
-            printf("OK\n");
+            printf("Aucune commande entrée\n");
         } else {
             commande = parse(buffer, commande);
-            printf("\n1\n");
+
             if (commande == NULL) {
+                commande = temp;
+                printf("Commande non accepté\n");
                 continue;
             } else {
+                printf("\nCommande accepté\n");
+
                 if (check_query(commande)) {
                     execute(commande);
+                } else {
+                    printf("La requete ne peut pas etre execute\n");
                 }
             }
         }

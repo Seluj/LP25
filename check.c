@@ -62,6 +62,7 @@ bool check_query(query_result_t *query) {
 bool check_query_select(update_or_select_query_t *query) {
     bool ret = false;
     if (table_exists(query->table_name) == 0) {
+        printf("La table n'existe pas\n");
         ret = false;
     } else {
         table_definition_t *definition = malloc(sizeof(table_definition_t));
@@ -105,6 +106,7 @@ bool check_query_select(update_or_select_query_t *query) {
 bool check_query_update(update_or_select_query_t *query) {
     bool ret = false;
     if (table_exists(query->table_name) == 0) {
+        printf("La table n'existe pas\n");
         ret = false;
     } else {
         table_definition_t *definition = malloc(sizeof(table_definition_t));
@@ -147,9 +149,24 @@ bool check_query_update(update_or_select_query_t *query) {
  */
 bool check_query_create(create_query_t *query) {
     if (table_exists(query->table_name) == 1) {
+        printf("La table existe deja\n");
         return false;
     } else {
-        return true;
+        bool ret = true;
+        int i = 0;
+        while (i < query->table_definition.fields_count && ret) {
+            switch (query->table_definition.definitions[i].column_type) {
+                case TYPE_UNKNOWN:
+                    printf("TYPE_UNKNOWN trouve\n");
+                    ret = false;
+                    break;
+                default:
+                    ret = true;
+                    break;
+            }
+            i++;
+        }
+        return ret;
     }
 }
 
@@ -167,6 +184,7 @@ bool check_query_create(create_query_t *query) {
 bool check_query_insert(insert_query_t *query) {
     bool ret = false;
     if (table_exists(query->table_name) == 0) {
+        printf("La table n'existe pas\n");
         ret = false;
     } else {
         table_definition_t *definition = malloc(sizeof(table_definition_t));
@@ -211,6 +229,7 @@ bool check_query_insert(insert_query_t *query) {
 bool check_query_delete(delete_query_t *query) {
     bool ret = false;
     if (table_exists(query->table_name) == 0) {
+        printf("La table n'existe pas\n");
         ret = false;
     } else {
         if (query->where_clause.values.fields_count == 0) {
@@ -235,6 +254,7 @@ bool check_query_delete(delete_query_t *query) {
  */
 bool check_query_drop_table(char *table_name) {
     if (table_exists(table_name) == 1) {
+        printf("La table n'existe pas\n");
         return true;
     } else {
         return false;
@@ -255,6 +275,7 @@ bool check_query_drop_db(char *db_name) {
     struct dirent *dirent;
     database = opendir(db_name);
     if (database == NULL) {
+        printf("La base de données n'existe pas\n");
         ret = false;
     } else {
         dirent = readdir(database);
@@ -265,6 +286,7 @@ bool check_query_drop_db(char *db_name) {
         }
         closedir(database);
         if (i == 0) {
+            printf("Il n'y a rien dans cette base de données\n");
             ret = false;
         } else {
             ret = true;

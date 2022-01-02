@@ -74,7 +74,7 @@ FILE *open_content_file(char *table_name, char *mode) {
     int lenth = strlen(table_name);
     if (table_exists(table_name)) {
         chdir(table_name);
-        file = malloc(sizeof(char) * (lenth + strlen(".data")));
+        file = malloc(sizeof(char) * (lenth + strlen(".data") + 1));
         strcpy(file, table_name);
         strcat(file, ".data");
         FILE *definition_file;
@@ -100,9 +100,9 @@ FILE *open_content_file(char *table_name, char *mode) {
 FILE *open_key_file(char *table_name, char *mode) {
     char *file;
     int lenth = strlen(table_name);
-    if (table_exists(table_name)) {
+    if (table_exists(table_name)==1) {
         chdir(table_name);
-        file = malloc(sizeof(char) * (lenth + strlen(".key")));
+        file = malloc(sizeof(char) * (lenth + strlen(".key")+1));
         strcpy(file, table_name);
         strcat(file, ".key");
         FILE *definition_file;
@@ -125,7 +125,7 @@ FILE *open_key_file(char *table_name, char *mode) {
  * @return 1 if the table already exist, 0 if not
  */
 int table_exists(const char table_name[]) {
-    char *table = malloc(sizeof(char) * strlen(table_name));
+    char *table = malloc(sizeof(char) * (strlen(table_name)+1));
     strcpy(table, table_name);
     if (directory_exists(table)) {
         return 1;
@@ -150,25 +150,35 @@ void create_table(create_query_t *table_definition) {
     FILE *content_file;
 
     _mkdir(table_definition->table_name);
-    chdir(table_definition->table_name);
 
-    def_file = open_definition_file(table_definition->table_name, "w+"); 
+    def_file = open_definition_file(table_definition->table_name, "w+");
     index_file = open_index_file(table_definition->table_name, "w+");
     content_file = open_content_file(table_definition->table_name, "w+");
+    if (def_file == NULL || index_file == NULL || content_file == NULL) {
+        chdir("..");
+        return;
+    }
 
     fclose(index_file);
     fclose(content_file);
-
+    /*
+    printf("Table name :%s\n", table_definition->table_name);
+    printf("Il y a %d champs\n", table_definition->table_definition.fields_count);
+    int untrucaupif=0;
+    while (untrucaupif< table_definition->table_definition.fields_count) {
+        printf("%d %s\n", table_definition->table_definition.definitions[untrucaupif].column_type, table_definition->table_definition.definitions[untrucaupif].column_name);
+        untrucaupif++;
+    }
+    */
     while (i < table_definition->table_definition.fields_count) {
         if (table_definition->table_definition.definitions[i].column_type == TYPE_PRIMARY_KEY) {
             key_file = open_key_file(table_definition->table_name, "w+");
             fwrite("1\n", 1, sizeof(int), key_file);
+            fclose(key_file);
         }
         fprintf(def_file, "%d %s\n", table_definition->table_definition.definitions[i].column_type, table_definition->table_definition.definitions[i].column_name);
         i++;
     }
-    chdir("..");
-    fclose(key_file);
     fclose(def_file);
 }
 
