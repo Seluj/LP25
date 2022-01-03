@@ -180,6 +180,7 @@ void create_table(create_query_t *table_definition) {
         i++;
     }
     fclose(def_file);
+    printf("La table %s a ete cree\n", table_definition->table_name);
 }
 
 /*!
@@ -189,7 +190,6 @@ void create_table(create_query_t *table_definition) {
 void drop_table(char *table_name) {
     printf("la table %s va être supprimée\n", table_name);
     recursive_rmdir(table_name);
-    
 }
 
 /*!

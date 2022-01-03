@@ -76,6 +76,7 @@ void execute_drop_table(char *table_name) {
 }
 
 void execute_drop_database(char *db_name) {
-    chdir("..");
+  chdir("..");
 	recursive_rmdir(db_name);
+  exit(EXIT_SUCCESS);
 }

@@ -138,7 +138,6 @@ bool check_query_update(update_or_select_query_t *query) {
         }
         free(definition);
     }
-
     return ret;
 }
 
@@ -189,6 +188,9 @@ bool check_query_insert(insert_query_t *query) {
     } else {
         table_definition_t *definition = malloc(sizeof(table_definition_t));
         definition = get_table_definition(query->table_name, definition);
+        for (int w=0; w<query->fields_names.fields_count; w++) {
+            strcpy(query->fields_names.fields[w].field_value.text_value, query->fields_names.fields[w].column_name);
+        }
         if (query->fields_names.fields_count == 1 && strcmp("*", query->fields_names.fields[0].column_name) == 0) {
             if (query->fields_values.fields_count == definition->fields_count) {
                 ret = true;
@@ -254,9 +256,9 @@ bool check_query_delete(delete_query_t *query) {
  */
 bool check_query_drop_table(char *table_name) {
     if (table_exists(table_name) == 1) {
-        printf("La table n'existe pas\n");
         return true;
     } else {
+        printf("La table n'existe pas\n");
         return false;
     }
 }
