@@ -161,19 +161,12 @@ void create_table(create_query_t *table_definition) {
 
     fclose(index_file);
     fclose(content_file);
-    /*
-    printf("Table name :%s\n", table_definition->table_name);
-    printf("Il y a %d champs\n", table_definition->table_definition.fields_count);
-    int untrucaupif=0;
-    while (untrucaupif< table_definition->table_definition.fields_count) {
-        printf("%d %s\n", table_definition->table_definition.definitions[untrucaupif].column_type, table_definition->table_definition.definitions[untrucaupif].column_name);
-        untrucaupif++;
-    }
-    */
+    
     while (i < table_definition->table_definition.fields_count) {
         if (table_definition->table_definition.definitions[i].column_type == TYPE_PRIMARY_KEY) {
-            key_file = open_key_file(table_definition->table_name, "w+");
-            fwrite("1\n", 1, sizeof(int), key_file);
+            unsigned long long to_write = 1;
+            key_file = open_key_file(table_definition->table_name, "wb+");
+            fwrite(&to_write, sizeof(unsigned long long), 1, key_file);
             fclose(key_file);
         }
         fprintf(def_file, "%d %s\n", table_definition->table_definition.definitions[i].column_type, table_definition->table_definition.definitions[i].column_name);
@@ -200,7 +193,7 @@ void drop_table(char *table_name) {
  */
 table_definition_t *get_table_definition(char *table_name, table_definition_t *result) {
     if (table_exists(table_name)) {
-        chdir(table_name);
+        //chdir(table_name);
         FILE *definition_file;
         definition_file = open_definition_file(table_name, "r");
         if (definition_file == NULL) {
@@ -212,6 +205,7 @@ table_definition_t *get_table_definition(char *table_name, table_definition_t *r
                 switch (type_tmp) {
                     case 0:
                         result->definitions[fields_count].column_type = TYPE_UNKNOWN;
+                        return NULL;
                         break;
                     case 1:
                         result->definitions[fields_count].column_type = TYPE_PRIMARY_KEY;
@@ -239,7 +233,7 @@ table_definition_t *get_table_definition(char *table_name, table_definition_t *r
                 return result;
             }
         }
-        chdir("..");
+        //chdir("..");
     } else {
         return NULL;
     }
@@ -283,7 +277,34 @@ uint16_t compute_record_length(table_definition_t *definition) {
  * @return the offset of the free index in the index file.
  */
 uint32_t find_first_free_record(char *table_name) {
+    uint8_t active = 1;
     uint32_t offset = 0;
+    uint16_t lenght = 0;
+    uint8_t active_to_write = 1;
+    int nombre;
+    FILE *index_file;
+    index_file = open_index_file(table_name, "rb+");
+    if (index_file != NULL) {
+        while (active == 1 && nombre != 0) {
+            nombre = fread(&active, sizeof(uint8_t), 1, index_file);
+            if (active == 1 && nombre != 0) {
+                fread(&offset, sizeof(uint32_t), 1, index_file);
+                fread(&lenght, sizeof(uint16_t), 1, index_file);
+            }
+        }
+        if (nombre == 0) {
+            uint32_t offset_to_write = offset+lenght;
+            fwrite(&active_to_write, sizeof(uint8_t), 1, index_file);
+            fwrite(&offset_to_write, sizeof(uint32_t), 1, index_file);
+            fwrite(&lenght, sizeof(uint16_t), 1, index_file);
+            offset = offset_to_write;
+        } else if (active == 0) {
+            fseek(index_file, -1, SEEK_CUR);
+            fwrite(&active_to_write, sizeof(uint8_t), 1, index_file);
+            fread(&offset, sizeof(uint32_t), 1, index_file);
+        }
+        fclose(index_file);
+    }
     return offset;
 }
 
@@ -294,6 +315,17 @@ uint32_t find_first_free_record(char *table_name) {
  * @param record the record to add
  */
 void add_row_to_table(char *table_name, table_record_t *record) {
+    table_definition_t *definition = malloc(sizeof(table_definition_t));
+    definition = get_table_definition(table_name, definition);
+    uint16_t lenght = compute_record_length(definition);
+    char *buffer = malloc(sizeof(char) * lenght);
+    buffer = format_row(table_name, buffer, definition, record);
+
+    fichier = fopen("def_file.txt", "a");
+    if (fichier != NULL){
+      fprintf(fichier, "%s", table_record_t);
+    }
+    return 0;
 }
 
 /*!
@@ -305,6 +337,20 @@ void add_row_to_table(char *table_name, table_record_t *record) {
  * @return a pointer to buffer in case of success, NULL else.
  */
 char *format_row(char *table_name, char *buffer, table_definition_t *table_definition, table_record_t *record) {
+    int j;
+    bool trouver;
+    for (int i=0; i<table_definition->fields_count; i++) {
+        trouver = false;
+        j = 0;
+        while (j < record->fields_count && trouver == false) {
+            if (strcmp(table_definition->definitions[i].column_name, record->fields[j].column_name) == 0) {
+                trouver = true;
+            } else {
+                j++;
+            }
+        }
+        
+    }
     return buffer;
 }
 
@@ -316,6 +362,18 @@ char *format_row(char *table_name, char *buffer, table_definition_t *table_defin
  * @param value the new key value
  */
 void update_key(char *table_name, unsigned long long value) {
+    FILE *key_file = open_key_file(table_name, "rb+");
+    value++;
+    if (key_file != NULL) {
+        unsigned long long key;
+        if (fread(&key, sizeof(unsigned long long), 1, key_file) != 0) {
+            if (value > key) {
+                fseek(key_file, 0, SEEK_SET);
+                fwrite(&value, sizeof(unsigned long long), 1, key_file);
+            }
+        }
+        fclose(key_file);
+    }
 }
 
 /*!
@@ -324,6 +382,15 @@ void update_key(char *table_name, unsigned long long value) {
  * @return the next value of the key is it exists, 0 else
  */
 unsigned long long get_next_key(char *table_name) {
+    FILE *key_file;
+    key_file = open_key_file(table_name, "rb");
+    if (key_file != NULL) {
+        unsigned long long key;
+        if (fread(&key, sizeof(unsigned long long), 1, key_file) != 0) {
+            return key;
+        }
+        fclose(key_file);
+    }
     return 0;
 }
 

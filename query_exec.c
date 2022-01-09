@@ -40,8 +40,7 @@ void execute(query_result_t *query) {
 }
 
 void execute_create(create_query_t *query){
-    create_table(query);
-}
+    create_table(query);}
 
 
 void execute_insert(insert_query_t *query) {
@@ -76,7 +75,7 @@ void execute_drop_table(char *table_name) {
 }
 
 void execute_drop_database(char *db_name) {
-  chdir("..");
-	recursive_rmdir(db_name);
-  exit(EXIT_SUCCESS);
+    chdir("..");
+    recursive_rmdir(db_name);
+    exit(EXIT_SUCCESS);
 }

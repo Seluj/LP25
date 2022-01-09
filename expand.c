@@ -26,13 +26,48 @@ void expand_select(update_or_select_query_t *query) {
 }
 
 void expand_insert(insert_query_t *query) {
-    table_definition_t *table_definition=malloc(sizeof(table_definition_t));
-    table_definition=get_table_definition(query->table_name,table_definition);
+    table_definition_t *table_definition = malloc(sizeof(table_definition_t));
+    table_definition = get_table_definition(query->table_name, table_definition);
+    
+        printf("\n================ TEST ================\n\n");
+        printf("Table name :%s\n", query->table_name);
+        printf("Il y a %d champs\n", query->fields_names.fields_count);
+        int untrucaupif=0;
+    
+                printf("Champs->valeurs:\n");
+                while (untrucaupif< query->fields_names.fields_count) {
+                    printf("\t%d :%s->%d->", untrucaupif, query->fields_names.fields[untrucaupif].column_name, query->fields_names.fields[untrucaupif].field_type);
+                    switch (query->fields_names.fields[untrucaupif].field_type) {
+                        case 1:
+                            printf("%d\n", query->fields_names.fields[untrucaupif].field_value.primary_key_value);
+                            break;
+                        case 2:
+                            printf("%d\n", query->fields_names.fields[untrucaupif].field_value.int_value);
+                            break;
+                        case 3:
+                            printf("%f\n", query->fields_names.fields[untrucaupif].field_value.float_value);
+                            break;
+                        default:
+                            printf("%s\n", query->fields_names.fields[untrucaupif].field_value.text_value);
+                            break;
+                    }
+                    untrucaupif++;
+                }
+        printf("\nTable Definitions:\n");
+        printf("Il y a %d champs\n", table_definition->fields_count);
+        untrucaupif=0;
+        printf("Les Champs (nom->type):\n");
+        while (untrucaupif<table_definition->fields_count) {
+            printf("\t%s->%d\n", table_definition->definitions[untrucaupif].column_name, table_definition->definitions[untrucaupif].column_type);
+            untrucaupif++;
+        }
+        printf("\n============== FIN TEST ==============\n\n");
+
     for (int i=0; i<table_definition->fields_count; i++) {
         if ((table_definition->definitions[i].column_type == TYPE_PRIMARY_KEY) || (strcmp(table_definition->definitions[i].column_name, query->fields_names.fields[i].column_name) == 0)) {
           field_record_t *field_record = malloc(sizeof(field_record_t));
-          field_record=&query->fields_names.fields[i];
-          make_default_value(field_record,query->table_name);
+          field_record = &query->fields_names.fields[i];
+          make_default_value(field_record, query->table_name);
           free(field_record);
         }
     }
@@ -41,7 +76,7 @@ void expand_insert(insert_query_t *query) {
 
 bool is_field_in_record(table_record_t *record, char *field_name) {
   for (int i=0; i<record->fields_count; i++) {
-    if (strcmp(record->fields[i].column_name,field_name) == 0) {
+    if (strcmp(record->fields[i].column_name, field_name) == 0) {
       return true;
     }
   }

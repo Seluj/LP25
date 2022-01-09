@@ -14,6 +14,7 @@
 *@return Pointer on the first non-space character
 */
 char *get_sep_space(char *sql) {
+  if (sql != NULL) {
     int numb_spaces = 0;
     while (*sql == ' ') {
         numb_spaces++;
@@ -24,6 +25,9 @@ char *get_sep_space(char *sql) {
     } else {
         return NULL;
     }
+  } else {
+    return NULL;
+  }
 }//DONE
 
 /*!
@@ -33,6 +37,7 @@ char *get_sep_space(char *sql) {
 *@return Pointer on the next non-space character following the character c surrounded or not by sequences of spaces.
 */
 char *get_sep_space_and_char(char *sql, char c) {
+  if (sql != NULL) {
     while (*sql == ' ') {
         sql++;
     }
@@ -46,6 +51,9 @@ char *get_sep_space_and_char(char *sql, char c) {
     } else {
         return NULL;
     }
+  } else {
+    return NULL;
+  }
 }//DONE
 
 /*!
@@ -55,6 +63,7 @@ char *get_sep_space_and_char(char *sql, char c) {
 *@return Pointer on the character following the specific keyword or null if the keyword isn't found
 */
 char *get_keyword(char *sql, char *keyword) {
+  if (sql != NULL) {
     char word[50];
     char first_word[50];
     int i = 0;
@@ -89,6 +98,9 @@ char *get_keyword(char *sql, char *keyword) {
     } else {
         return NULL;
     }
+  } else {
+    return NULL;
+  }
 }//DONE
 
 /*!
@@ -98,36 +110,42 @@ char *get_keyword(char *sql, char *keyword) {
 *@return Pointer on the character following the value we've gathered
 */
 char *get_field_name(char *sql, char *field_name) {
+  if (sql != NULL) {
     char *temp;
     temp = get_sep_space(sql);
     if (temp != NULL) {
       sql = temp;
     }
     temp = field_name;
-    while (*field_name != '\0') {
-      *field_name = '\0';
-      field_name++;
+    while (*temp != '\0') {
+      *temp = '\0';
+      temp++;
     }
+    if (*sql != ';' && *sql != ')' && *sql != ',' && *sql != '=' && *sql != '(' ) {
     // 39 corresponds to '
-    if (*sql == 39) {
-        sql++;
-        while (*sql != 39 && *sql != '\0') {
-            *field_name = *sql;
-            sql++;
-            field_name++;
-        }
-        if (sql == '\0') {
-          return NULL;
-        } 
-        sql++;
+      if (*sql == 39) {
+          sql++;
+          while (*sql != 39 && *sql != '\0') {
+              *field_name = *sql;
+              sql++;
+              field_name++;
+          }
+          if (*sql == '\0') {
+            return NULL;
+          } 
+          sql++;
+      } else {
+          while (*sql != ' ' && *sql != ';' && *sql != ')' && *sql != ',' && *sql != '=' && *sql != '(') {
+              *field_name = *sql;
+              sql++;
+              field_name++;
+          }
+      }
     } else {
-        while (*sql != ' ' && *sql != ';' && *sql != ')' && *sql != ',' && *sql != '=') {
-            *field_name = *sql;
-            sql++;
-            field_name++;
-        }
+      sql = NULL;
     }
-    return sql;
+  }
+  return sql;
 }//DONE
 
 /*!
@@ -153,43 +171,52 @@ bool has_reached_sql_end(char *sql) {
 *@return Pointer on the next character following the list of fields or values we've found
 */
 char *parse_fields_or_values_list(char *sql, table_record_t *result) {
-    char name_or_value[TEXT_LENGTH];
-    char *field_name_or_value = &name_or_value[0];
-    int j = 0;
-    char *temp;
+    char name_or_value[150];
     bool end = false;
-    bool parentheses = false; //Indicates if the list is in parentheses
-    result->fields_count = 0 ;
+    int i;
+    char *temp;
+    result->fields_count = 0;
     temp = get_sep_space(sql);
     if (temp != NULL) {
-        sql = temp;
+      sql = temp;
     }
     if (*sql == '(') {
         sql++;
-        parentheses = true;
-    }
-    while (end != true && j < MAX_FIELDS_COUNT && sql != NULL) {
-      for (int i = 0; i < TEXT_LENGTH; i++) {
-        name_or_value[i] = '\0';
-      }
-        sql = get_field_name(sql, field_name_or_value);
-        if (sql != NULL) {
-          strcpy(result->fields[j].field_value.text_value, name_or_value);
-          if (get_sep_space_and_char(sql, ',') == NULL) {
-            end = true;
-            if (get_sep_space_and_char(sql,')') == NULL && parentheses == true) {
-              sql =  NULL;
-            } else if (get_sep_space_and_char(sql,')') != NULL && parentheses == true) {
-              sql = get_sep_space_and_char(sql,')');
+        while (end == false && *sql != ')') {
+            for (int j=0; j<150; j++) {
+                name_or_value[j]='\0';
             }
-          } else {
-            sql = get_sep_space_and_char(sql, ',');
-          }
-          result->fields_count = result->fields_count + 1;
+            //We gather the field or value
+            sql = get_field_name(sql, name_or_value);
+            strcpy(result->fields[result->fields_count].field_value.text_value, name_or_value);
+            //We go on to the next field or value [if there is one of course]
+            temp = get_sep_space_and_char(sql, ',');
+            if (temp == NULL) {
+              end = true;
+              temp = get_sep_space(sql);
+              if (temp != NULL) {
+                sql = temp;
+              }
+            } else {
+              sql = get_sep_space_and_char(sql, ',');
+            }
+            result->fields_count++;
         }
+    } else if (*sql == '*') {
+      result->fields[result->fields_count].field_value.text_value[0] = '*';
+      result->fields_count = 1;
+    } else {
+      printf("Les champs donnés ne sont pas correctement notés\n");
+      return NULL;
     }
-    return sql;
-}//DONE but issue if no closing parentheses
+    if (*sql == ')') {
+        sql = get_sep_space_and_char(sql, ')');
+        return sql;
+    } else {
+        printf("\nErreur de syntaxe\n");
+        return NULL;
+    }
+}//DONE 
 
 /*!
 *@brief Function extracts a list of fields (this type of list is seperated by commas, however the field and field type are seperated by a space)
@@ -276,16 +303,34 @@ char *parse_create_fields_list(char *sql, table_definition_t *result) {
 *@return Pointer on the next character following the equality  
 */
 char *parse_equality(char *sql, field_record_t *equality) {
-    char name[TEXT_LENGTH];
-    char *equality_name = &name[0];
-    sql = get_field_name(sql, equality_name);
-    strcpy(equality->column_name, equality_name);
+  char name[TEXT_LENGTH];
+  char *equality_name = &name[0];
+  for (int j = 0; j < TEXT_LENGTH; j++) {
+    name[j] = '\0';
+  }
+  sql = get_field_name(sql, equality_name);
+  if (sql != NULL) {
+    strcpy(equality->column_name, name);
     sql = get_sep_space_and_char(sql, '=');
-    sql = get_field_name(sql, equality_name);
-    strcpy(equality->field_value.text_value, equality_name);
-    equality->field_type = TYPE_UNKNOWN;
-    return sql;
-}
+    if (sql != NULL) {
+      for (int j = 0; j < TEXT_LENGTH; j++) {
+        name[j] = '\0';
+      }
+      sql = get_field_name(sql, name);
+      if (sql != NULL) {
+        strcpy(equality->field_value.text_value, equality_name);
+        equality->field_type = TYPE_UNKNOWN;
+      } else {
+        printf("\n[parse_equality] Erreur dans votre égalité. Il manque la valeur\n");
+      }
+    } else {
+      printf("\n[parse_equality] Erreur dans votre égalité. Il manque le signe égalité\n");
+    }
+  } else {
+    printf("\n[parse_equality] Erreur dans votre égalité. Il manque le field\n");
+  }
+  return sql;
+}//DONE
 
 /*!
 *@brief Function parses a SET query composed of at least one equality
@@ -294,54 +339,23 @@ char *parse_equality(char *sql, field_record_t *equality) {
 *@return Pointer on the next character following the equality  
 */
 char *parse_set_clause(char *sql, table_record_t *result) {
-    char field_name[TEXT_LENGTH];
-    char value[TEXT_LENGTH];
-    char field_and_value[TEXT_LENGTH+TEXT_LENGTH];
-    char *pointer_field_and_value = &field_and_value[0];
-    char *temp;
-    int i;
-    bool end = false;
-    sql = get_field_name(sql, pointer_field_and_value);
-    while (end == false && sql != NULL) {
-      //We reset the string of caracters
-      for (int j = 0; j < TEXT_LENGTH; j++) {
-        field_name[j] = '\0';
-        value[j] = '\0';
-      }
-      for (int j = 0; j < TEXT_LENGTH; j++) {
-        field_and_value[j] = '\0';
-      }
-      //We gather the field_name
-      i = 0;
-      while (field_and_value[i] != '=' && field_and_value[i] != '\0'){ 
-          field_name[i] = field_and_value[i];
-          i++;
-      }
-      if (*pointer_field_and_value == '=' && field_name[0] != '\0') {
-
-        i = 0;
-        while (*pointer_field_and_value != '\0') {
-          value[i] = *pointer_field_and_value;
-          i++;
-          pointer_field_and_value++;
-        }
-        if (value[0] != '\0') {
-          temp = get_sep_space_and_char(sql, ',');
-          if (temp == NULL){
-            end = true;
-          } else {
-            sql = temp;
-            sql = get_field_name(sql, pointer_field_and_value);
-          }
-        } else {
-          sql = NULL;
-        }
+  bool end = false;
+  result->fields_count = 0;
+  while (end == false && sql != NULL) {
+    sql = parse_equality(sql, &result->fields[result->fields_count]);
+    if (sql != NULL) {
+      result->fields_count++;
+      if (get_sep_space_and_char(sql, ',') == NULL){
+        end = true;
       } else {
-            sql = NULL;
+        sql = get_sep_space_and_char(sql, ',');
       }
-    }
-    return sql;
-}
+    } else {
+      printf("\n[parse_set_clause] Erreur dans une des égalités\n");
+    }     
+  }
+  return sql;
+}//DONE
 
 /*!
 *@brief Function parses a WHERE query composed of at least one equality
@@ -350,42 +364,50 @@ char *parse_set_clause(char *sql, table_record_t *result) {
 *@return Pointer on the next character following the equality  
 */
 char *parse_where_clause(char *sql, filter_t *filter) {
-    char *temp;
-    int i = 0;
-    char operator_one[5];
-    char operator[5];
-    char *pointer_operator = &operator[0];
-    bool end = false;
+  bool end = false;
+  filter->values.fields_count = 0;
+  if (get_keyword(sql, "WHERE") != NULL) {
     sql = get_keyword(sql, "WHERE");
+    sql = parse_equality(sql, &filter->values.fields[filter->values.fields_count]);
     if (sql != NULL) {
-      sql = parse_equality(sql, &filter->values.fields[i]);
+      filter->values.fields_count++;
       if (get_keyword(sql, "AND") != NULL){
-        strcpy(operator_one, "AND");
-        sql = get_keyword(sql, "AND");
+        sql = get_field_name(sql, "AND");
         filter->logic_operator = OP_AND;
       } else if (get_keyword(sql, "OR") != NULL) {
-        strcpy(operator_one, "OR");
-        sql = get_keyword(sql, "OR");
+        sql = get_field_name(sql, "OR");
         filter->logic_operator = OP_OR;
       } else {
         end = true;
       }
-      temp = sql;
-      while (strcmp(operator, operator_one) == 0 && temp != NULL && sql != NULL && end == false) {
-        sql = temp;
-        sql = parse_equality(sql, &filter->values.fields[i]);
-        temp = get_field_name(sql, pointer_operator);
-        i++;
-      }
-      if (sql == NULL) {
-        return NULL;
-        filter->logic_operator = OP_ERROR;
-      } else {
-        return sql;
+      while (sql != NULL && end == false) {
+        sql = parse_equality(sql, &filter->values.fields[filter->values.fields_count]);
+        if (sql != NULL) {
+          filter->values.fields_count++;
+          if (filter->logic_operator == OP_AND) {
+            if (get_keyword(sql, "AND") != NULL) {
+              sql = get_keyword(sql, "AND");
+            } else {
+              end = true;
+            }
+          } else if (filter->logic_operator == OP_OR) {
+            if (get_keyword(sql, "OR") != NULL) {
+              sql = get_keyword(sql, "OR");
+            } else {
+              end = true;
+            }
+          } else {
+            end = true;
+          }
+        } else {
+          printf("\n[parse_where_clause] Erreur avec l'égalité.\n");
+        }
       }
     } else {
-        return NULL;
+      printf("\n[parse_where_clause] Erreur avec l'égalité.\n");
     }
+  }
+  return sql;
 }
 
 /*!
@@ -405,7 +427,7 @@ query_result_t *parse(char *sql, query_result_t *result) {
   } else {
     comma = false;
   }
-  printf("Commande entrée : \n\t%s\n\n", sql);
+  printf("\nCommande entrée : \n\t%s\n\n", sql);
   if (comma == true) {
     if (get_keyword(sql, "SELECT") != NULL) {
       sql = get_keyword(sql, "SELECT");
@@ -476,22 +498,36 @@ query_result_t *parse_select(char *sql, query_result_t *result) {
     char field_name[TEXT_LENGTH];
     char *pointer_field = &field_name[0];
     sql = parse_fields_or_values_list(sql, &result->query_content.select_query.set_clause);
-    sql = get_keyword(sql, "FROM");
-    sql = get_field_name(sql, pointer_field);
-    strcpy(result->query_content.select_query.table_name, field_name);
     if (sql != NULL) {
-        if (parse_where_clause(sql, &result->query_content.select_query.where_clause) != NULL) {
-            return result;
-        } else {
-            if (has_reached_sql_end(sql) == true) {
-                return result;
-            } else {
-                return NULL;
+      sql = get_keyword(sql, "FROM");
+      if (sql != NULL) {
+        sql = get_field_name(sql, pointer_field);
+        if (sql != NULL) {
+          strcpy(result->query_content.select_query.table_name, field_name);
+          if (sql != NULL) {
+            if (parse_where_clause(sql, &result->query_content.select_query.where_clause) != NULL) {
+              sql = parse_where_clause(sql, &result->query_content.select_query.where_clause);
             }
+            if (has_reached_sql_end(sql) != true) {
+              printf("\n[parse_select] La fin de la commande n'est pas correct\n");
+                result = NULL;
+            }  
+          } else {
+            result = NULL;
+          }
+        } else {
+          printf("\n[parse_select] Veuillez entrer un nom de tableau avec la bonne syntaxe.\n");
+          result = NULL;
         }
+      } else {
+        printf("\n[parse_select] Il manque 'FROM'.\n");
+        result = NULL;
+      }
     } else {
-        return NULL;
+      printf("\n[parse_select] Veuillez entrer une liste de champs ou un asterix avec la bonne syntaxe.\n");
+      result = NULL;
     }
+    return result;
 }
 
 /*!
@@ -501,28 +537,30 @@ query_result_t *parse_select(char *sql, query_result_t *result) {
 *@return Pointer on the structure where the different query parameters are stored
 */
 query_result_t *parse_create(char *sql, query_result_t *result) {
-    char table_name[TEXT_LENGTH];
-    char *pointer_name = &table_name[0];
-    int i = 0;
-    if (get_sep_space(sql) != NULL) {
-        sql = get_sep_space(sql);
-    }
-    sql = get_field_name(sql, pointer_name);
-    if (strlen(table_name) == TEXT_LENGTH-1) {
-        return NULL;
+  char table_name[TEXT_LENGTH];
+  char *pointer_name = &table_name[0];
+  int i = 0;
+  if (get_sep_space(sql) != NULL) {
+    sql = get_sep_space(sql);
+  }
+  sql = get_field_name(sql, pointer_name);
+  if (strlen(table_name) == TEXT_LENGTH-1) {
+    printf("\n[parse_create] Le nom de tableau est trop long\n");
+    result = NULL;
+  } else {
+    strcpy(result->query_content.create_query.table_name, table_name);
+    sql = parse_create_fields_list(sql, &result->query_content.create_query.table_definition);
+    if (sql == NULL) {
+      printf("\n[parse_create] Veuillez vérifier la syntaxe des champs et types entrés\n");
+      result = NULL;
     } else {
-        strcpy(result->query_content.create_query.table_name, table_name);
-        sql = parse_create_fields_list(sql, &result->query_content.create_query.table_definition);
-        if (sql == NULL) {
-            return NULL;
-        } else {
-            if (has_reached_sql_end(sql) == true) {
-              return result;
-            } else {
-                return NULL;
-            }
-        }
+      if (has_reached_sql_end(sql) != true) {
+        printf("\n[parse_create] Veuillez vérifier la syntaxe de la fin de votre requète\n");
+        result = NULL;
+      }
     }
+  }
+  return result;
 } //DONE
 
 /*!
@@ -535,16 +573,33 @@ query_result_t *parse_insert(char *sql, query_result_t *result) {
     char field_name[TEXT_LENGTH];
     char *pointer_field = &field_name[0];
     if (get_field_name(sql, pointer_field) != NULL){
+      strcpy(result->query_content.insert_query.table_name, field_name);
       sql = get_field_name(sql, pointer_field);
-      strcpy(result->query_content.insert_query.table_name,field_name);
       sql = parse_fields_or_values_list(sql, &result->query_content.insert_query.fields_names);
-      sql = get_keyword(sql, "VALUES");
       if (sql != NULL) {
-        sql = parse_fields_or_values_list(sql, &result->query_content.insert_query.fields_values);
-        if (has_reached_sql_end(sql) != true) {
-          sql = NULL;
+        sql = get_keyword(sql, "VALUES");
+        if (sql != NULL) {
+          sql = parse_fields_or_values_list(sql, &result->query_content.insert_query.fields_values);
+          if (sql != NULL) {
+            if (has_reached_sql_end(sql) != true) {
+              printf("\n[parse_insert] La fin de votre commande n'est pas correct.\n");
+              result = NULL;
+            }
+          } else {
+            printf("\n[parse_insert] Les valeurs entrées ne respectent pas la bonne syntaxe. ex: (marley, bob)\n");
+            result = NULL;
+          }
+        } else {
+          printf("\n[parse_insert] Il manque 'VALUES'.\n");
+          result = NULL;
         }
+      } else {
+        printf("\n[parse_insert] Les champs entrés ne respectent pas la bonne syntaxe. ex: (nom, prénom)\n");
+        result = NULL;
       }
+    } else {
+      printf("\n[parse_insert] Veuillez entrer un nom de table. \n");
+      result = NULL;
     }
   return result;
 }//DONE
@@ -556,21 +611,35 @@ query_result_t *parse_insert(char *sql, query_result_t *result) {
 *@return Pointer on the structure where the different query parameters are stored
 */
 query_result_t *parse_update(char *sql, query_result_t *result) {
-    char *temp;
-    char field_name[TEXT_LENGTH];
-    char *pointer_field = &field_name[0];
-    sql = get_field_name(sql, pointer_field);
+  char field_name[TEXT_LENGTH];
+  char *pointer_field = &field_name[0];
+  sql = get_field_name(sql, pointer_field);
+  if (sql != NULL) {
     strcpy(result->query_content.update_query.table_name, field_name);
     sql = get_keyword(sql, "SET");
-    sql = parse_set_clause(sql, &result->query_content.update_query.set_clause);
-    if (parse_where_clause(sql, &result->query_content.update_query.where_clause) != NULL) {
-      sql = parse_where_clause(sql, &result->query_content.update_query.where_clause);
-    }
-    if (has_reached_sql_end(sql) == true) {
-      return result;
+    if (sql != NULL) {
+      sql = parse_set_clause(sql, &result->query_content.update_query.set_clause);
+      if (sql != NULL) {
+        if (parse_where_clause(sql, &result->query_content.update_query.where_clause) != NULL) {
+          sql = parse_where_clause(sql, &result->query_content.update_query.where_clause);
+        }
+        if (has_reached_sql_end(sql) != true) {
+          printf("\n[parse_update] Veuillez vérifier la syntaxe de fin.\n");
+          result = NULL;
+        }
+      } else {
+        printf("\n[parse_update] Veuillez vérifier vos conditions et la syntaxe.\n");
+        result = NULL;
+      }
     } else {
-        return NULL;
+      printf("\n[parse_update] Il manque 'SET' ou votre requète est mal formée.\n");
+      result = NULL;
     }
+  } else {
+    printf("\n[parse_update] Veuillez rentrer un nom de table en respectant la syntaxe.\n");
+    result = NULL;
+  }
+  return result;
 }
 
 /*!
@@ -580,24 +649,23 @@ query_result_t *parse_update(char *sql, query_result_t *result) {
 *@return Pointer on the structure where the different query parameters are stored
 */
 query_result_t *parse_delete(char *sql, query_result_t *result) {
-    char *temp;
-    char field_name[TEXT_LENGTH];
-    char *pointer_field = &field_name[0];
-    sql = get_field_name(sql, pointer_field);
-    if (sql != NULL) {
-        strcpy(field_name, result->query_content.delete_query.table_name);
-        temp = parse_where_clause(sql, &result->query_content.delete_query.where_clause);
-        if (temp != NULL ) {
-            sql = temp;
-        }
-        if ( has_reached_sql_end(sql) == true) {
-            return result;
-        } else {
-            return NULL;
-        }
-    } else {
-        return NULL;
+  char field_name[TEXT_LENGTH];
+  char *pointer_field = &field_name[0];
+  sql = get_field_name(sql, pointer_field);
+  if (sql != NULL) {
+    strcpy(field_name, result->query_content.delete_query.table_name);
+    if (parse_where_clause(sql, &result->query_content.delete_query.where_clause) != NULL ) {
+      sql = parse_where_clause(sql, &result->query_content.delete_query.where_clause);
     }
+    if ( has_reached_sql_end(sql) != true) {
+      printf("\n[parse_update] Veuillez vérifier la syntaxe de fin.\n");
+      result = NULL;
+    } 
+  } else {
+    printf("\n[parse_update] Veuillez rentrer un nom de table en respectant la syntaxe.\n");
+    result = NULL;
+  }
+  return result;
 }
 
 /*!
@@ -607,19 +675,20 @@ query_result_t *parse_delete(char *sql, query_result_t *result) {
 *@return Pointer on the structure where the different query parameters are stored
 */
 query_result_t *parse_drop_db(char *sql, query_result_t *result) {
-    char database_name[TEXT_LENGTH];
-    char *database = &database_name[0];
-    sql = get_field_name(sql, database);
-    if (sql == NULL) {
-        return NULL;
-    } else {
-        if (has_reached_sql_end(sql) == true) {
-            strcpy(result->query_content.database_name, database_name);
-            return result;
-        } else {
-            return NULL;
-        }
+  char database_name[TEXT_LENGTH];
+  char *database = &database_name[0];
+  sql = get_field_name(sql, database);
+  if (sql == NULL) {
+    printf("\n[parse_drop_db] Veuillez rentrer un nom de tableau en respectant la syntaxe.\n");
+    result = NULL;
+  } else {
+    strcpy(result->query_content.database_name, database_name);
+    if (has_reached_sql_end(sql) != true) {
+      printf("\n[parse_drop_db] Veuillez vérifier la fin de votre commande.\n");
+      result = NULL;
     }
+  }
+  return result;
 } //DONE
 
 /*!
@@ -633,13 +702,14 @@ query_result_t *parse_drop_table(char *sql, query_result_t *result) {
     char *table = &table_name[0];
     sql = get_field_name(sql, table);
     if (sql == NULL) {
-        return NULL;
+      printf("\n[parse_drop_table] Veuillez rentrer un nom de base de donnée en respectant la syntaxe.\n");
+      result = NULL;
     } else {
-        if (has_reached_sql_end(sql) == true) {
-            strcpy(result->query_content.table_name, table_name);
-            return result;
-        } else {
-            return NULL;
-        }
+      strcpy(result->query_content.table_name, table_name);
+      if (has_reached_sql_end(sql) != true) {
+        printf("\n[parse_drop_table] Veuillez vérifier la fin de votre commande.\n");
+        result = NULL;
+      }
     }
+    return result;
 } //DONE
