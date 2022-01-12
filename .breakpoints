@@ -3,15 +3,15 @@
     "check.c": [
       {
         "id": "be4491ad-31a7-44fd-bb8f-3848abd4afab",
-        "line": 7,
-        "version": 8168,
-        "index": 122
+        "line": 8,
+        "version": 8176,
+        "index": 124
       },
       {
         "id": "241ff6bd-78a5-4cd4-aa63-89ee05efaf0c",
-        "line": 124,
-        "version": 8168,
-        "index": 4916
+        "line": 99,
+        "version": 8176,
+        "index": 3664
       }
     ],
     "check.h": [
@@ -30,18 +30,26 @@
         "index": 0
       }
     ],
+    "expand.c": [
+      {
+        "id": "dce8acc2-f918-44ca-9816-0aad3e3102eb",
+        "line": 10,
+        "version": 2101,
+        "index": 129
+      }
+    ],
     "query_exec.c": [
       {
         "id": "8c27930d-47ab-4cff-bef0-f58f5a46d16c",
-        "line": 176,
-        "version": 5575,
-        "index": 6317
+        "line": 147,
+        "version": 5590,
+        "index": 5012
       },
       {
         "id": "1551523f-f9bc-4182-96df-818776fbb498",
-        "line": 230,
-        "version": 5575,
-        "index": 8082
+        "line": 201,
+        "version": 5590,
+        "index": 6777
       }
     ],
     "table.c": [

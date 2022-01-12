@@ -127,35 +127,6 @@ void execute_select(update_or_select_query_t *query) {
     uint8_t active;
     int nb = 36;
     int i = 0;
-    /*
-    printf("\n================ TEST ================\n\n");
-    printf("Table name :%s\n", query->table_name);
-    printf("Il y a %d champs\n", query->set_clause.fields_count);
-    printf("Il y a %d valeurs\n", query->where_clause.values.fields_count);
-    int untrucaupif=0;
-    printf("Champs->type->valeurs:\n");
-    while (untrucaupif< query->set_clause.fields_count) {
-        printf("\t%d :%s->%d->", untrucaupif, query->set_clause.fields[untrucaupif].column_name, query->set_clause.fields[untrucaupif].field_type);
-        switch (query->set_clause.fields[untrucaupif].field_type) {
-            case 1:
-                printf("%d\n", query->set_clause.fields[untrucaupif].field_value.primary_key_value);
-                break;
-            case 2:
-                printf("%d\n", query->set_clause.fields[untrucaupif].field_value.int_value);
-                break;
-            case 3:
-                printf("%f\n", query->set_clause.fields[untrucaupif].field_value.float_value);
-                break;
-            default:
-                printf("%s\n", query->set_clause.fields[untrucaupif].field_value.text_value);
-                break;
-        }
-        untrucaupif++;
-    }
-    printf("\n============== FIN TEST ==============\n\n");
-*/
-    //get_table_record(char *table_name, uint32_t offset, table_definition_t *def, table_record_t *result)
-
     table_definition_t *def = malloc(sizeof(table_definition_t));
     def = get_table_definition(query->table_name, def);
     uint16_t length = compute_record_length(def);

@@ -5,7 +5,6 @@
  * @date 2021 - 2022
  */
 
-
 #include "expand.h"
 #include "table.h"
 

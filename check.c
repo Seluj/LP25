@@ -4,6 +4,7 @@
  * @author Jules F.
  * @date 2021 - 2022
  */
+ 
 #include "check.h"
 
 #include <stdio.h>
@@ -69,32 +70,6 @@ bool check_query_select(update_or_select_query_t *query) {
         strcpy(query->where_clause.values.fields[v].column_name, query->where_clause.values.fields[v].field_value.text_value);
     }
     
-    printf("\n================ TEST ================\n\n");
-    printf("Table name :%s\n", query->table_name);
-    printf("Il y a %d champs\n", query->set_clause.fields_count);
-    printf("Il y a %d valeurs\n", query->where_clause.values.fields_count);
-    int untrucaupif=0;
-    printf("Champs->type->valeurs:\n");
-    while (untrucaupif< query->set_clause.fields_count) {
-        printf("\t%d :%s->%d->", untrucaupif, query->set_clause.fields[untrucaupif].column_name, query->set_clause.fields[untrucaupif].field_type);
-        switch (query->set_clause.fields[untrucaupif].field_type) {
-            case 1:
-                printf("%d\n", query->set_clause.fields[untrucaupif].field_value.primary_key_value);
-                break;
-            case 2:
-                printf("%d\n", query->set_clause.fields[untrucaupif].field_value.int_value);
-                break;
-            case 3:
-                printf("%f\n", query->set_clause.fields[untrucaupif].field_value.float_value);
-                break;
-            default:
-                printf("%s\n", query->set_clause.fields[untrucaupif].field_value.text_value);
-                break;
-        }
-        untrucaupif++;
-    }
-    printf("\n============== FIN TEST ==============\n\n");
-    
     bool ret = false;
     if (table_exists(query->table_name) == 0) {
         printf("La table n'existe pas\n");
@@ -128,26 +103,6 @@ bool check_query_select(update_or_select_query_t *query) {
                 }
             }
         }
-/*
-        if (query->where_clause.values.fields_count == 0 && query->set_clause.fields_count == 0) {
-            ret = true;
-        } else {
-            if (query->where_clause.values.fields_count != 0 && query->set_clause.fields_count == 0) {
-                
-            } else if (query->where_clause.values.fields_count == 0 && query->set_clause.fields_count != 0) {
-                if (check_fields_list(&query->set_clause, definition)) {
-                    ret = true;
-                } else {
-                    ret = false;
-                }
-            } else {
-                if (check_value_types(&query->where_clause.values, definition) && check_fields_list(&query->set_clause, definition)) {
-                    ret = true;
-                } else {
-                    ret = false;
-                }
-            }
-        }*/
         free(definition);
     }
     return ret;
@@ -250,34 +205,6 @@ bool check_query_insert(insert_query_t *query) {
             strcpy(query->fields_names.fields[w].column_name, query->fields_names.fields[w].field_value.text_value);
         }
 
-/*
-        printf("\n================ TEST ================\n\n");
-        printf("Table name :%s\n", query->table_name);
-        printf("Il y a %d champs\n", query->fields_names.fields_count);
-        printf("Il y a %d valeurs\n", query->fields_values.fields_count);
-        int untrucaupif=0;
-        printf("Champs:\n");
-        while (untrucaupif< query->fields_names.fields_count) {
-            printf("\t%d :%s\n", untrucaupif, query->fields_names.fields[untrucaupif].column_name);
-            untrucaupif++;
-        }
-        untrucaupif=0;
-        printf("Valeurs:\n");
-        while (untrucaupif< query->fields_values.fields_count) {
-            printf("\t%d :%s->%d\n", untrucaupif, query->fields_values.fields[untrucaupif].field_value.text_value, query->fields_values.fields[untrucaupif].field_type);
-            untrucaupif++;
-        }
-        printf("\nTable Definitions:\n");
-        printf("Il y a %d champs\n", definition->fields_count);
-        untrucaupif=0;
-        printf("Les Champs (nom->type):\n");
-        while (untrucaupif<definition->fields_count) {
-            printf("\t%s->%d\n", definition->definitions[untrucaupif].column_name, definition->definitions[untrucaupif].column_type);
-            untrucaupif++;
-        }
-        printf("\n============== FIN TEST ==============\n\n");
-*/
-
         if (query->fields_names.fields_count == 1 && strcmp("*", query->fields_names.fields[0].column_name) == 0) {
             ret = true;
         } else {
@@ -293,53 +220,9 @@ bool check_query_insert(insert_query_t *query) {
                 strcpy(query->fields_names.fields[i].field_value.text_value, query->fields_values.fields[i].field_value.text_value);
             }
             query->fields_names.fields_count = query->fields_values.fields_count;
-            
-            /*
-            printf("\n================ TEST ================\n\n");
-            printf("Table name :%s\n", query->table_name);
-            printf("Il y a %d champs\n", query->fields_names.fields_count);
-            printf("Il y a %d valeurs\n", query->fields_values.fields_count);
-            int untrucaupif=0;
-            printf("Champs->valeurs:\n");
-            while (untrucaupif< query->fields_names.fields_count) {
-                printf("\t%d :%s->%s->%d\n", untrucaupif, query->fields_names.fields[untrucaupif].column_name, query->fields_names.fields[untrucaupif].field_value.text_value, query->fields_names.fields[untrucaupif].field_type);
-                untrucaupif++;
-            }
-            printf("\n============== FIN TEST ==============\n\n");
-
-            */
 
             if (check_value_types(&query->fields_names, definition)) {
                 ret = true;
-
-                /*
-                printf("\n================ TEST ================\n\n");
-                printf("Table name :%s\n", query->table_name);
-                printf("Il y a %d champs\n", query->fields_names.fields_count);
-                printf("Il y a %d valeurs\n", query->fields_values.fields_count);
-                int untrucaupif=0;
-                printf("Champs->type->valeurs:\n");
-                while (untrucaupif< query->fields_names.fields_count) {
-                    printf("\t%d :%s->%d->", untrucaupif, query->fields_names.fields[untrucaupif].column_name, query->fields_names.fields[untrucaupif].field_type);
-                    switch (query->fields_names.fields[untrucaupif].field_type) {
-                        case 1:
-                            printf("%d\n", query->fields_names.fields[untrucaupif].field_value.primary_key_value);
-                            break;
-                        case 2:
-                            printf("%d\n", query->fields_names.fields[untrucaupif].field_value.int_value);
-                            break;
-                        case 3:
-                            printf("%f\n", query->fields_names.fields[untrucaupif].field_value.float_value);
-                            break;
-                        default:
-                            printf("%s\n", query->fields_names.fields[untrucaupif].field_value.text_value);
-                            break;
-                    }
-                    untrucaupif++;
-                }
-                printf("\n============== FIN TEST ==============\n\n");
-                */
-
             } else {
                 printf("Les valeurs entrees ne correspondent pas au type des colonnes\n");
                 ret = false;
