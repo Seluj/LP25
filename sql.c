@@ -204,7 +204,9 @@ char *parse_fields_or_values_list(char *sql, table_record_t *result) {
         }
     } else if (*sql == '*') {
       result->fields[result->fields_count].field_value.text_value[0] = '*';
+      sql = get_sep_space_and_char(sql, '*');
       result->fields_count = 1;
+      return sql;
     } else {
       printf("Les champs donnés ne sont pas correctement notés\n");
       return NULL;
@@ -378,6 +380,7 @@ char *parse_where_clause(char *sql, filter_t *filter) {
         sql = get_field_name(sql, "OR");
         filter->logic_operator = OP_OR;
       } else {
+        filter->logic_operator = OP_ERROR;
         end = true;
       }
       while (sql != NULL && end == false) {
@@ -507,6 +510,8 @@ query_result_t *parse_select(char *sql, query_result_t *result) {
           if (sql != NULL) {
             if (parse_where_clause(sql, &result->query_content.select_query.where_clause) != NULL) {
               sql = parse_where_clause(sql, &result->query_content.select_query.where_clause);
+            } else {
+              result->query_content.select_query.where_clause.values.fields_count = 0;
             }
             if (has_reached_sql_end(sql) != true) {
               printf("\n[parse_select] La fin de la commande n'est pas correct\n");
@@ -527,6 +532,7 @@ query_result_t *parse_select(char *sql, query_result_t *result) {
       printf("\n[parse_select] Veuillez entrer une liste de champs ou un asterix avec la bonne syntaxe.\n");
       result = NULL;
     }
+
     return result;
 }
 
@@ -622,6 +628,8 @@ query_result_t *parse_update(char *sql, query_result_t *result) {
       if (sql != NULL) {
         if (parse_where_clause(sql, &result->query_content.update_query.where_clause) != NULL) {
           sql = parse_where_clause(sql, &result->query_content.update_query.where_clause);
+        } else {
+          result->query_content.select_query.where_clause.values.fields_count = 0;
         }
         if (has_reached_sql_end(sql) != true) {
           printf("\n[parse_update] Veuillez vérifier la syntaxe de fin.\n");
@@ -656,6 +664,8 @@ query_result_t *parse_delete(char *sql, query_result_t *result) {
     strcpy(field_name, result->query_content.delete_query.table_name);
     if (parse_where_clause(sql, &result->query_content.delete_query.where_clause) != NULL ) {
       sql = parse_where_clause(sql, &result->query_content.delete_query.where_clause);
+    } else {
+      result->query_content.select_query.where_clause.values.fields_count = 0;
     }
     if ( has_reached_sql_end(sql) != true) {
       printf("\n[parse_update] Veuillez vérifier la syntaxe de fin.\n");

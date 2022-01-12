@@ -123,10 +123,34 @@ int main(int argc, char *argv[]) {
     //sauvegarde de la zone mémoire allouée
     query_result_t *temp = commande;
     
+    /*
+    table_definition_t *def = malloc(sizeof(table_definition_t));
+    def = get_table_definition("table_3", def);
+    table_record_t *record = malloc(sizeof(table_record_t));
+    record = get_table_record("table_3", 166, def, record);
+    printf("Name->type->valeur\n");
+    for (int untruc=0; untruc<record->fields_count; untruc++) {
+        printf("\t%d :%s->%d->", untruc, record->fields[untruc].column_name, record->fields[untruc].field_type);
+        switch (record->fields[untruc].field_type) {
+            case 1:
+                printf("%llu\n", record->fields[untruc].field_value.primary_key_value);
+                break;
+            case 2:
+                printf("%lld\n", record->fields[untruc].field_value.int_value);
+                break;
+            case 3:
+                printf("%f\n", record->fields[untruc].field_value.float_value);
+                break;
+            default:
+                printf("%s\n", record->fields[untruc].field_value.text_value);
+                break;
+            }
+    }
+    */
+
     printf("\nAttention: Le code fourni n'est pas terminé, seul quelques fonctions ont été implémentées mais ne suiffisent pas a faire fonctionner l'ensemble du programme\n");
 
     do {
-        
         printf("> ");
         fflush(stdin);
         if (fgets(buffer, SQL_COMMAND_MAX_SIZE, stdin) == NULL)

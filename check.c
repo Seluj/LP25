@@ -60,6 +60,8 @@ bool check_query(query_result_t *query) {
  * @return true if valid, false if invalid
  */
 bool check_query_select(update_or_select_query_t *query) {
+
+
     bool ret = false;
     if (table_exists(query->table_name) == 0) {
         printf("La table n'existe pas\n");
@@ -67,16 +69,18 @@ bool check_query_select(update_or_select_query_t *query) {
     } else {
         table_definition_t *definition = malloc(sizeof(table_definition_t));
         definition = get_table_definition(query->table_name, definition);
-        if (query->where_clause.values.fields_count == 0 && query->set_clause.fields_count == 0) {
-            ret = true;
-        } else {
-            if (query->where_clause.values.fields_count != 0 && query->set_clause.fields_count == 0) {
+        if (query->set_clause.fields_count == 1 && strcmp(query->set_clause.fields[0].field_value.text_value, "*") == 0) {
+            if (query->where_clause.values.fields_count == 0) {
+                ret = true;
+            } else {
                 if (check_value_types(&query->where_clause.values, definition)) {
                     ret = true;
                 } else {
                     ret = false;
                 }
-            } else if (query->where_clause.values.fields_count == 0 && query->set_clause.fields_count != 0) {
+            }
+        } else {
+            if (query->where_clause.values.fields_count == 0) {
                 if (check_fields_list(&query->set_clause, definition)) {
                     ret = true;
                 } else {
@@ -90,6 +94,26 @@ bool check_query_select(update_or_select_query_t *query) {
                 }
             }
         }
+/*
+        if (query->where_clause.values.fields_count == 0 && query->set_clause.fields_count == 0) {
+            ret = true;
+        } else {
+            if (query->where_clause.values.fields_count != 0 && query->set_clause.fields_count == 0) {
+                
+            } else if (query->where_clause.values.fields_count == 0 && query->set_clause.fields_count != 0) {
+                if (check_fields_list(&query->set_clause, definition)) {
+                    ret = true;
+                } else {
+                    ret = false;
+                }
+            } else {
+                if (check_value_types(&query->where_clause.values, definition) && check_fields_list(&query->set_clause, definition)) {
+                    ret = true;
+                } else {
+                    ret = false;
+                }
+            }
+        }*/
         free(definition);
     }
     return ret;
@@ -260,7 +284,7 @@ bool check_query_insert(insert_query_t *query) {
                 printf("Il y a %d champs\n", query->fields_names.fields_count);
                 printf("Il y a %d valeurs\n", query->fields_values.fields_count);
                 int untrucaupif=0;
-                printf("Champs->valeurs:\n");
+                printf("Champs->type->valeurs:\n");
                 while (untrucaupif< query->fields_names.fields_count) {
                     printf("\t%d :%s->%d->", untrucaupif, query->fields_names.fields[untrucaupif].column_name, query->fields_names.fields[untrucaupif].field_type);
                     switch (query->fields_names.fields[untrucaupif].field_type) {

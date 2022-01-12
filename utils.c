@@ -52,7 +52,6 @@ void _mkdir(const char *dir) {
     char tmp[256];
     char *p = NULL;
     size_t len;
-
     snprintf(tmp, sizeof(tmp), "%s", dir);
     len = strlen(tmp);
     if (tmp[len - 1] == '/') {

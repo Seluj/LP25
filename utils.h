@@ -7,6 +7,7 @@
 #include <stdbool.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <math.h>
 
 #include "database.h"
 

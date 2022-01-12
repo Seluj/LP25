@@ -45,7 +45,69 @@ void add_record(record_list_t *record_list, table_record_t *record) {
  * @return the display length of the field
  */
 int field_record_length(field_record_t *field_record) {
+    /*int nombreDeCaracteres = 0;
+    do{
+        caractereActuel = field_record_t[nombreDeCaracteres];
+        nombreDeCaracteres++; 
+    }while(caractereActuel != '\0');
     return 0;
+    */
+    int tmp_int;
+    float tmp_float;
+    int nb_caractere = 0;
+    bool boolean;
+    switch (field_record->field_type) {
+        case TYPE_PRIMARY_KEY:
+            if (field_record->field_value.primary_key_value != 0) {
+                nb_caractere = log(field_record->field_value.primary_key_value) + 1;
+            } else {
+                nb_caractere = 1;
+            }
+            break;
+        case TYPE_INTEGER:
+            if (field_record->field_value.int_value != 0) {
+                nb_caractere = log(field_record->field_value.int_value) + 1;
+                if (field_record->field_value.int_value < 0) {
+                    nb_caractere++;
+                }
+            } else {
+                nb_caractere = 1;
+            }
+            break;
+        case TYPE_FLOAT:
+            if (field_record->field_value.int_value != 0) {
+                tmp_int = field_record->field_value.float_value;
+                if (tmp_int != 0) {
+                    nb_caractere = log(tmp_int);
+                } else {
+                    nb_caractere++;
+                }
+                if (field_record->field_value.float_value < 0) {
+                    tmp_float = tmp_int + field_record->field_value.float_value;
+                    while (tmp_float != (int)tmp_float) {
+                        tmp_float = tmp_float * 10;
+                        nb_caractere++;
+                    }
+                    nb_caractere++;
+                } else {
+                    tmp_float = field_record->field_value.float_value - tmp_int;
+                    while (tmp_float != (int)tmp_float) {
+                        tmp_float = tmp_float * 10;
+                        nb_caractere++;
+                    }
+                }
+            } else {
+                nb_caractere = 1;
+            }
+            break;
+        case TYPE_TEXT:
+            nb_caractere = strlen(field_record->field_value.text_value) + 1;
+            break;
+        case TYPE_UNKNOWN:
+            nb_caractere = strlen(field_record->column_name) + 1;
+            break;
+    }
+    return nb_caractere;
 }
 
 /*!
@@ -71,4 +133,86 @@ int field_record_length(field_record_t *field_record) {
   +----+-------+
  */
 void display_table_record_list(record_list_t *record_list) {
+  //Step 1 going through the results to find max size
+  int field_count = record_list->head->record.fields_count;
+  int max_size[MAX_FIELDS_COUNT] = {0};
+  record_list_node_t *temp = record_list->head;
+  //We go over every lign
+  while (temp != NULL) {
+    //For each line we study every single field
+    for (int i = 0; i < field_count; i++) {
+      if (max_size[i] < field_record_length(&temp->record.fields[i])) {
+        max_size[field_count] = field_record_length(&temp->record.fields[i]);
+      }
+    }
+    temp = temp->next;
+  }
+
+  //Step 2 display field names with the proper format
+  printf("\n");
+  for (int i = 0; i< field_count; i++) {
+    printf("+");
+    for (int j = 0; j < max_size[i] + 2; j++) {
+      printf("-");
+    }
+  }
+  printf("+\n");
+  temp = record_list->head;
+  for (int i = 0; i< field_count; i++) {
+    printf("| ");
+    for (int j = 0; j < max_size[i] - strlen(temp->record.fields[i].column_name); j++) {
+      printf(" ");
+    }
+    printf("%s", temp->record.fields[i].column_name);
+    printf(" ");
+  }
+  printf("|\n");
+  for (int i = 0; i< field_count; i++) {
+    printf("+");
+    for (int j = 0; j < max_size[i] + 2; j++) {
+      printf("-");
+    }
+  }
+  printf("\n+");
+
+  //Step 3 display each value
+  temp = record_list->head;
+  while (temp != NULL) {
+    for (int i = 0; i < field_count; i++) {
+      printf("| ");
+      for (int j = 0; j < max_size[i] - field_record_length(&temp->record.fields[i]); j++) {
+        printf(" ");
+      }
+      switch (temp->record.fields[i].field_type) {
+        case TYPE_INTEGER:
+          printf("%lld", temp->record.fields[i].field_value.int_value);
+          break;
+        case TYPE_FLOAT:
+          printf("%f", temp->record.fields[i].field_value.float_value);
+          break;
+        case TYPE_TEXT:
+          printf("%s", temp->record.fields[i].field_value.text_value);
+          break;
+        case TYPE_PRIMARY_KEY:
+          printf("%llu", temp->record.fields[i].field_value.primary_key_value);
+          break;
+        case TYPE_UNKNOWN:
+          printf("[display_table_record_list] Erreur avec le type d'une des valeurs.");
+          break;
+      }
+      printf(" ");
+    }
+    printf("|\n");
+    temp = temp->next;
+  }
+
+  //Step 4 display end line
+  for (int i = 0; i< field_count; i++) {
+    printf("+");
+    for (int j = 0; j < max_size[i] + 2; j++) {
+      printf("-");
+    }
+  }
+  printf("\n+");
 }
+

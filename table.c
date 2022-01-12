@@ -6,6 +6,7 @@
 
 #include <sys/stat.h>
 #include <unistd.h>
+#include <math.h>
 
 /*!
  * @brief function open_definition_file opens the table key file
@@ -193,7 +194,6 @@ void drop_table(char *table_name) {
  */
 table_definition_t *get_table_definition(char *table_name, table_definition_t *result) {
     if (table_exists(table_name)) {
-        //chdir(table_name);
         FILE *definition_file;
         definition_file = open_definition_file(table_name, "r");
         if (definition_file == NULL) {
@@ -233,7 +233,6 @@ table_definition_t *get_table_definition(char *table_name, table_definition_t *r
                 return result;
             }
         }
-        //chdir("..");
     } else {
         return NULL;
     }
@@ -279,24 +278,29 @@ uint16_t compute_record_length(table_definition_t *definition) {
 uint32_t find_first_free_record(char *table_name) {
     uint8_t active = 1;
     uint32_t offset = 0;
-    uint16_t lenght = 0;
+    uint16_t length = 0;
     uint8_t active_to_write = 1;
-    int nombre;
+    int nombre = 2;
     FILE *index_file;
     index_file = open_index_file(table_name, "rb+");
+    table_definition_t *def = malloc(sizeof(table_definition_t));
+    def = get_table_definition(table_name, def);
     if (index_file != NULL) {
         while (active == 1 && nombre != 0) {
             nombre = fread(&active, sizeof(uint8_t), 1, index_file);
             if (active == 1 && nombre != 0) {
                 fread(&offset, sizeof(uint32_t), 1, index_file);
-                fread(&lenght, sizeof(uint16_t), 1, index_file);
+                fread(&length, sizeof(uint16_t), 1, index_file);
             }
         }
         if (nombre == 0) {
-            uint32_t offset_to_write = offset+lenght;
+            uint32_t offset_to_write = offset+length;
             fwrite(&active_to_write, sizeof(uint8_t), 1, index_file);
             fwrite(&offset_to_write, sizeof(uint32_t), 1, index_file);
-            fwrite(&lenght, sizeof(uint16_t), 1, index_file);
+            if (length == 0) {
+              length = compute_record_length(def);
+            }
+            fwrite(&length, sizeof(uint16_t), 1, index_file);
             offset = offset_to_write;
         } else if (active == 0) {
             fseek(index_file, -1, SEEK_CUR);
@@ -315,17 +319,43 @@ uint32_t find_first_free_record(char *table_name) {
  * @param record the record to add
  */
 void add_row_to_table(char *table_name, table_record_t *record) {
-    table_definition_t *definition = malloc(sizeof(table_definition_t));
-    definition = get_table_definition(table_name, definition);
-    uint16_t lenght = compute_record_length(definition);
-    char *buffer = malloc(sizeof(char) * lenght);
-    buffer = format_row(table_name, buffer, definition, record);
+    //Préparation de l'ajout
+    table_definition_t *def = malloc(sizeof(table_definition_t));
+    def = get_table_definition(table_name, def);
+    if (def != NULL) { 
+      //Recherche d'une clé primaire
+      int i = 0;
+      bool key = false;
+      while (i < def->fields_count && key == false) {
+          if (record->fields[i].field_type == TYPE_PRIMARY_KEY) {
+              key = true;
+          } else {
+              i++;
+          }
+      }
+      uint16_t length = compute_record_length(def);
+      uint32_t offset = find_first_free_record(table_name);
+      
+      char *buffer = malloc(sizeof(char) * length + 1);
+      for (int j=0; j<length + 1; j++) {
+          buffer[j] = '\0';
+      }
+      buffer = format_row(table_name, buffer, def, record);
+      
+      FILE *content_file = open_content_file(table_name, "rb+");
+      if (content_file != NULL) {
+          fseek(content_file, offset, SEEK_SET);
+          fwrite(buffer, length, 1, content_file);
+          if (key) {
+              update_key(table_name, record->fields[i].field_value.primary_key_value);
+          }
+      }
 
-    fichier = fopen("def_file.txt", "a");
-    if (fichier != NULL){
-      fprintf(fichier, "%s", table_record_t);
+      fclose(content_file);
+    } else {
+      printf("[add_row_to_table] Erreur dans l'ouverture du fichier.");
+      exit(EXIT_FAILURE);
     }
-    return 0;
 }
 
 /*!
@@ -337,9 +367,14 @@ void add_row_to_table(char *table_name, table_record_t *record) {
  * @return a pointer to buffer in case of success, NULL else.
  */
 char *format_row(char *table_name, char *buffer, table_definition_t *table_definition, table_record_t *record) {
-    int j;
+    int i, j, y;
+    int position=0;
     bool trouver;
-    for (int i=0; i<table_definition->fields_count; i++) {
+    double tmp;
+    FILE *file_temp;
+    char *caractere;
+    char *name_file_temp={"file_temp.temp"};
+    for (i=0; i<table_definition->fields_count; i++) {
         trouver = false;
         j = 0;
         while (j < record->fields_count && trouver == false) {
@@ -349,7 +384,89 @@ char *format_row(char *table_name, char *buffer, table_definition_t *table_defin
                 j++;
             }
         }
-        
+        switch (record->fields[j].field_type) {
+            case TYPE_PRIMARY_KEY:
+                //creation d'un fichier temporaire
+                file_temp = fopen(name_file_temp, "wb+");
+                //ecriture dans le fichier en mode binaire du nombre
+                tmp = record->fields[j].field_value.primary_key_value;
+                fwrite(&tmp, sizeof(double), 1, file_temp);
+                //deplacement au début du fichier
+                fseek(file_temp, 0, SEEK_SET);
+                //allocation de la mémoire neccessaire pour strocker le type voulu
+                caractere = malloc(sizeof(char) * sizeof(double));
+                //lecture du nombre sous forme de caractere
+                fread(caractere, sizeof(char), 8, file_temp);
+                //concaténation dans le buffer pour utilisation
+                for (y=0; y<8; y++) {
+                    buffer[position] = caractere[y];
+                    position++;
+                }
+                //liberation de la mémoire et du fichier
+                free(caractere);
+                fclose(file_temp);
+                //suppression du fichier temporaire
+                remove(name_file_temp);
+                break;
+            case TYPE_INTEGER:
+                //creation d'un fichier temporaire
+                file_temp = fopen(name_file_temp, "wb+");
+                //conversion en double
+                tmp = record->fields[j].field_value.int_value;
+                //ecriture dans le fichier en mode binaire du nombre
+                fwrite(&tmp, sizeof(double), 1, file_temp);
+                //deplacement au début du fichier
+                fseek(file_temp, 0, SEEK_SET);
+                //allocation de la mémoire neccessaire pour strocker le type voulu
+                caractere = malloc(sizeof(char) * sizeof(double));
+                //lecture du nombre sous forme de caractere
+                fread(caractere, sizeof(char), 8, file_temp);
+                //concaténation dans le buffer pour utilisation
+                for (y=0; y<8; y++) {
+                    buffer[position] = caractere[y];
+                    position++;
+                }
+                //liberation de la mémoire et du fichier
+                free(caractere);
+                fclose(file_temp);
+                //suppression du fichier temporaire
+                remove(name_file_temp);
+                break;
+            case TYPE_FLOAT:
+                //creation d'un fichier temporaire 
+                file_temp = fopen(name_file_temp, "wb+");
+                //ecriture dans le fichier en mode binaire du nombre
+                fwrite(&record->fields[j].field_value.float_value, sizeof(double), 1, file_temp);
+                //deplacement au début du fichier
+                fseek(file_temp, 0, SEEK_SET);
+                //allocation de la mémoire neccessaire pour strocker le type voulu
+                caractere = malloc(sizeof(char) * sizeof(double));
+                //lecture du nombre sous forme de caractere
+                fread(caractere, sizeof(char), 8, file_temp);
+                //concaténation dans le buffer pour utilisation
+                for (y=0; y<8; y++) {
+                    buffer[position] = caractere[y];
+                    position++;
+                }
+                //liberation de la mémoire et du fichier
+                free(caractere);
+                fclose(file_temp);
+                //suppression du fichier temporaire
+                remove(name_file_temp);
+                break;
+            case TYPE_TEXT:
+                for (y=strlen(record->fields[j].field_value.text_value); y<150; y++) {
+                  record->fields[j].field_value.text_value[y] = '\0';
+                }
+                for (y=0; y<150; y++) {
+                    buffer[position] = record->fields[j].field_value.text_value[y];
+                    position++;
+                }
+                break;
+            case TYPE_UNKNOWN:
+              printf("[format_row] Erreur dans le type de la valeur pour la transformation en binaire");
+              break;
+        }
     }
     return buffer;
 }
@@ -413,7 +530,11 @@ field_record_t *find_field_in_table_record(char *field_name, table_record_t *rec
  * @return true if the record matches the filter, false else
  */
 bool is_matching_filter(table_record_t *record, filter_t *filter) {
-    return false;
+    bool is_matching = false;
+    for () {
+
+    }
+    return is_matching;
 }
 
 /*!
@@ -426,7 +547,8 @@ bool is_matching_filter(table_record_t *record, filter_t *filter) {
  * @return a pointer to the first element of the resulting linked list. Shall be freed by the calling function
  */
 record_list_t *get_filtered_records(char *table_name, table_record_t *required_fields, filter_t *filter, record_list_t *result) {
-    return result;
+  
+  return result;
 }
 
 /*!
@@ -438,5 +560,36 @@ record_list_t *get_filtered_records(char *table_name, table_record_t *required_f
  * @return the pointer to to result if succeeded, NULL else.
  */
 table_record_t *get_table_record(char *table_name, uint32_t offset, table_definition_t *def, table_record_t *result) {
-    return result;
+  double temp;
+  FILE *content_file = open_content_file(table_name, "rb");
+  if (content_file != NULL) {
+    fseek(content_file, offset, SEEK_SET);
+    for (int i=0; i<def->fields_count; i++) {
+        switch (def->definitions[i].column_type) {
+            case TYPE_PRIMARY_KEY:
+                fread(&result->fields[i].field_value.primary_key_value, sizeof(unsigned long long), 1, content_file);
+                result->fields[i].field_type = TYPE_PRIMARY_KEY;
+                break; 
+            case TYPE_INTEGER:
+                fread(&temp, sizeof(double), 1, content_file);
+                result->fields[i].field_value.int_value = temp;
+                result->fields[i].field_type = TYPE_INTEGER;
+                break;
+            case TYPE_FLOAT:
+                fread(&result->fields[i].field_value.float_value, sizeof(double), 1, content_file);
+                result->fields[i].field_type = TYPE_FLOAT;
+                break;
+            case TYPE_TEXT:
+                fread(&result->fields[i].field_value.text_value, sizeof(char), 150, content_file);
+                result->fields[i].field_type = TYPE_TEXT;
+                break;
+            default: 
+                printf("[get_table_record] Erreur dans le switch");
+                break;
+        }
+        strcpy(result->fields[i].column_name, def->definitions[i].column_name);
+    }
+    result->fields_count = def->fields_count;
+  }
+  return result;
 }
