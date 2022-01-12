@@ -1,12 +1,20 @@
-//
-// Created by flassabe on 30/11/2021.
-//
+/*!
+ * @file record_list.c
+ * @brief fichier gestion record_list, utilisé lors des requêtes select 
+ * @author Jules F. et Céliane A.
+ * @date 2021 - 2022
+ */
 
 #include "record_list.h"
 
 #include <stdio.h>
 #include <string.h>
 
+/*!
+ * @brief function clears the record_list
+ * @param list of records
+ * @return void
+ */
 void clear_list(record_list_t *record_list) {
     if (record_list != NULL) {
         record_list_node_t *tmp = record_list->head;
@@ -19,6 +27,12 @@ void clear_list(record_list_t *record_list) {
     }
 }
 
+/*!
+ * @brief function adds a record to the list of records
+ * @param list of records
+ * @param record that will be added to the list
+ * @return void
+ */
 void add_record(record_list_t *record_list, table_record_t *record) {
     if (!record_list)
         return;
@@ -26,7 +40,6 @@ void add_record(record_list_t *record_list, table_record_t *record) {
     record_list_node_t *new_node = malloc(sizeof(record_list_node_t));
     memcpy(&new_node->record, record, sizeof (table_record_t));
     new_node->next = NULL;
-
     if (record_list->head == NULL) {
         record_list->head = record_list->tail = new_node;
         new_node->previous = NULL;
@@ -45,28 +58,26 @@ void add_record(record_list_t *record_list, table_record_t *record) {
  * @return the display length of the field
  */
 int field_record_length(field_record_t *field_record) {
-    /*int nombreDeCaracteres = 0;
-    do{
-        caractereActuel = field_record_t[nombreDeCaracteres];
-        nombreDeCaracteres++; 
-    }while(caractereActuel != '\0');
-    return 0;
-    */
-    int tmp_int;
-    float tmp_float;
+    long long tmp_int;
+    double tmp_float;
     int nb_caractere = 0;
     bool boolean;
+    bool trouver = false;
+    FILE *file_temp;
+    char *name_file_temp = {"file.temp"};
+    char caractere[500] = {'\0'};
+
     switch (field_record->field_type) {
         case TYPE_PRIMARY_KEY:
             if (field_record->field_value.primary_key_value != 0) {
-                nb_caractere = log(field_record->field_value.primary_key_value) + 1;
+                nb_caractere = log10(field_record->field_value.primary_key_value) + 1;
             } else {
                 nb_caractere = 1;
             }
             break;
         case TYPE_INTEGER:
             if (field_record->field_value.int_value != 0) {
-                nb_caractere = log(field_record->field_value.int_value) + 1;
+                nb_caractere = log10(field_record->field_value.int_value) + 1;
                 if (field_record->field_value.int_value < 0) {
                     nb_caractere++;
                 }
@@ -75,36 +86,19 @@ int field_record_length(field_record_t *field_record) {
             }
             break;
         case TYPE_FLOAT:
-            if (field_record->field_value.int_value != 0) {
-                tmp_int = field_record->field_value.float_value;
-                if (tmp_int != 0) {
-                    nb_caractere = log(tmp_int);
-                } else {
-                    nb_caractere++;
-                }
-                if (field_record->field_value.float_value < 0) {
-                    tmp_float = tmp_int + field_record->field_value.float_value;
-                    while (tmp_float != (int)tmp_float) {
-                        tmp_float = tmp_float * 10;
-                        nb_caractere++;
-                    }
-                    nb_caractere++;
-                } else {
-                    tmp_float = field_record->field_value.float_value - tmp_int;
-                    while (tmp_float != (int)tmp_float) {
-                        tmp_float = tmp_float * 10;
-                        nb_caractere++;
-                    }
-                }
-            } else {
-                nb_caractere = 1;
-            }
+            file_temp = fopen(name_file_temp, "w+");
+            fprintf(file_temp, "%f", field_record->field_value.float_value);
+            fseek(file_temp, 0, SEEK_SET);
+            fscanf(file_temp, "%s", caractere);
+            nb_caractere = strlen(caractere);
+            fclose(file_temp);
+            remove(name_file_temp);
             break;
         case TYPE_TEXT:
-            nb_caractere = strlen(field_record->field_value.text_value) + 1;
+            nb_caractere = strlen(field_record->field_value.text_value);
             break;
         case TYPE_UNKNOWN:
-            nb_caractere = strlen(field_record->column_name) + 1;
+            nb_caractere = strlen(field_record->column_name);
             break;
     }
     return nb_caractere;
@@ -137,12 +131,14 @@ void display_table_record_list(record_list_t *record_list) {
   int field_count = record_list->head->record.fields_count;
   int max_size[MAX_FIELDS_COUNT] = {0};
   record_list_node_t *temp = record_list->head;
-  //We go over every lign
+  int tmp;
+  //We go over every line
   while (temp != NULL) {
     //For each line we study every single field
     for (int i = 0; i < field_count; i++) {
-      if (max_size[i] < field_record_length(&temp->record.fields[i])) {
-        max_size[field_count] = field_record_length(&temp->record.fields[i]);
+      tmp = field_record_length(&temp->record.fields[i]);
+      if (max_size[i] < tmp) {
+        max_size[i] = tmp;
       }
     }
     temp = temp->next;
@@ -173,10 +169,10 @@ void display_table_record_list(record_list_t *record_list) {
       printf("-");
     }
   }
-  printf("\n+");
+  printf("+\n");
 
   //Step 3 display each value
-  temp = record_list->head;
+  temp = temp->next;
   while (temp != NULL) {
     for (int i = 0; i < field_count; i++) {
       printf("| ");
@@ -213,6 +209,6 @@ void display_table_record_list(record_list_t *record_list) {
       printf("-");
     }
   }
-  printf("\n+");
+  printf("+\n");
 }
 

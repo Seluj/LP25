@@ -1,7 +1,3 @@
-//
-// Created by flassabe on 30/11/2021.
-//
-
 #ifndef _RECORD_LIST_H
 #define _RECORD_LIST_H
 

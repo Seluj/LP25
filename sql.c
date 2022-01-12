@@ -1,7 +1,10 @@
-//
-// Created by flassabe on 16/11/2021.
-//
-
+/*!
+ * @file sql.c
+ * @brief fichier de la partie sql
+ * @author Céliane A.
+ * @date 2021 - 2022
+ */
+ 
 #include "sql.h"
 
 #include <ctype.h>
@@ -28,7 +31,7 @@ char *get_sep_space(char *sql) {
   } else {
     return NULL;
   }
-}//DONE
+}
 
 /*!
 *@brief Function checks the presence of a sequence or not of zeros, the character c, and another sequence or not of zeros
@@ -54,7 +57,7 @@ char *get_sep_space_and_char(char *sql, char c) {
   } else {
     return NULL;
   }
-}//DONE
+}
 
 /*!
 *@brief Function checks that the first word in the pointed string corresponds to the keyword in the parameters
@@ -101,7 +104,7 @@ char *get_keyword(char *sql, char *keyword) {
   } else {
     return NULL;
   }
-}//DONE
+}
 
 /*!
 *@brief Function extracts a field name and changes pointer position on to the character following the extracted field name
@@ -146,7 +149,7 @@ char *get_field_name(char *sql, char *field_name) {
     }
   }
   return sql;
-}//DONE
+}
 
 /*!
 *@brief Function tests if we've reached the end of the string 
@@ -162,7 +165,7 @@ bool has_reached_sql_end(char *sql) {
     end = true;
   }
   return end;
-}//DONE
+}
 
 /*!
 *@brief Function extracts a list of fields or values (this type of list is seperated by commas)
@@ -203,12 +206,12 @@ char *parse_fields_or_values_list(char *sql, table_record_t *result) {
             result->fields_count++;
         }
     } else if (*sql == '*') {
-      result->fields[result->fields_count].field_value.text_value[0] = '*';
+      strcpy(result->fields[result->fields_count].field_value.text_value, "*");
       sql = get_sep_space_and_char(sql, '*');
       result->fields_count = 1;
       return sql;
     } else {
-      printf("Les champs donnés ne sont pas correctement notés\n");
+      printf("[parse_fields_or_values_list] Les champs donnés ne sont pas correctement notés\n");
       return NULL;
     }
     if (*sql == ')') {
@@ -218,7 +221,7 @@ char *parse_fields_or_values_list(char *sql, table_record_t *result) {
         printf("\nErreur de syntaxe\n");
         return NULL;
     }
-}//DONE 
+} 
 
 /*!
 *@brief Function extracts a list of fields (this type of list is seperated by commas, however the field and field type are seperated by a space)
@@ -286,7 +289,7 @@ char *parse_create_fields_list(char *sql, table_definition_t *result) {
             result->fields_count++;
         }
     } else {
-        printf("Les champs donnés ne sont pas correctement notés\n");
+        printf("[parse_create_fields_list] Les champs donnés ne sont pas correctement notés\n");
         return NULL;
     }
     if (*sql == ')') {
@@ -296,7 +299,7 @@ char *parse_create_fields_list(char *sql, table_definition_t *result) {
         printf("\nErreur de syntaxe\n");
         return NULL;
     }
-} //DONE
+}
 
 /*!
 *@brief Function exctracts equality
@@ -307,7 +310,7 @@ char *parse_create_fields_list(char *sql, table_definition_t *result) {
 char *parse_equality(char *sql, field_record_t *equality) {
   char name[TEXT_LENGTH];
   char *equality_name = &name[0];
-  for (int j = 0; j < TEXT_LENGTH; j++) {
+  for (int j=0; j<TEXT_LENGTH; j++) {
     name[j] = '\0';
   }
   sql = get_field_name(sql, equality_name);
@@ -315,7 +318,7 @@ char *parse_equality(char *sql, field_record_t *equality) {
     strcpy(equality->column_name, name);
     sql = get_sep_space_and_char(sql, '=');
     if (sql != NULL) {
-      for (int j = 0; j < TEXT_LENGTH; j++) {
+      for (int j=0; j<TEXT_LENGTH; j++) {
         name[j] = '\0';
       }
       sql = get_field_name(sql, name);
@@ -332,7 +335,7 @@ char *parse_equality(char *sql, field_record_t *equality) {
     printf("\n[parse_equality] Erreur dans votre égalité. Il manque le field\n");
   }
   return sql;
-}//DONE
+}
 
 /*!
 *@brief Function parses a SET query composed of at least one equality
@@ -357,7 +360,7 @@ char *parse_set_clause(char *sql, table_record_t *result) {
     }     
   }
   return sql;
-}//DONE
+}
 
 /*!
 *@brief Function parses a WHERE query composed of at least one equality
@@ -453,7 +456,7 @@ query_result_t *parse(char *sql, query_result_t *result) {
         result = parse_create(sql, result);
         return result;
       } else {
-          printf("Create found but table is missing\n");
+          printf("[parse] Create found but table is missing\n");
         return NULL;
       }
     } else if (get_keyword(sql, "UPDATE") != NULL) {
@@ -486,10 +489,10 @@ query_result_t *parse(char *sql, query_result_t *result) {
       return NULL;
     }
   } else {
-      printf("Il manque le point virgule\n");
+      printf("[parse] Il manque le point virgule\n");
     return NULL;
   }
-}//DONE
+}
 
 /*!
 *@brief Function calls the proper functions for a SELECT query
@@ -567,7 +570,7 @@ query_result_t *parse_create(char *sql, query_result_t *result) {
     }
   }
   return result;
-} //DONE
+}
 
 /*!
 *@brief Function calls the proper functions for a INSERT query
@@ -578,7 +581,7 @@ query_result_t *parse_create(char *sql, query_result_t *result) {
 query_result_t *parse_insert(char *sql, query_result_t *result) {
     char field_name[TEXT_LENGTH];
     char *pointer_field = &field_name[0];
-    if (get_field_name(sql, pointer_field) != NULL){
+    if (get_field_name(sql, pointer_field) != NULL) {
       strcpy(result->query_content.insert_query.table_name, field_name);
       sql = get_field_name(sql, pointer_field);
       sql = parse_fields_or_values_list(sql, &result->query_content.insert_query.fields_names);
@@ -608,7 +611,7 @@ query_result_t *parse_insert(char *sql, query_result_t *result) {
       result = NULL;
     }
   return result;
-}//DONE
+}
 
 /*!
 *@brief Function calls the proper functions for an UPDATE query
@@ -699,7 +702,7 @@ query_result_t *parse_drop_db(char *sql, query_result_t *result) {
     }
   }
   return result;
-} //DONE
+}
 
 /*!
 *@brief Function calls the proper functions for a DROP TABLE query
@@ -722,4 +725,4 @@ query_result_t *parse_drop_table(char *sql, query_result_t *result) {
       }
     }
     return result;
-} //DONE
+}

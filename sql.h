@@ -1,7 +1,3 @@
-//
-// Created by flassabe on 16/11/2021.
-//
-
 #ifndef _SQL_H
 #define _SQL_H
 

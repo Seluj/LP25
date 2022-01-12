@@ -1,6 +1,9 @@
-//
-// Created by flassabe on 16/11/2021.
-//
+/*!
+ * @file utils.c
+ * @brief fonctions utiles
+ * @author Jules F. et Céliane A.
+ * @date 2021 - 2022
+ */
 
 #include "utils.h"
 

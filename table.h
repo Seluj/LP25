@@ -1,7 +1,3 @@
-//
-// Created by flassabe on 19/11/2021.
-//
-
 #ifndef _TABLE_H
 #define _TABLE_H
 

@@ -1,6 +1,10 @@
-//
-// Created by flassabe on 19/11/2021.
-//
+/*!
+ * @file table.c
+ * @brief fichier de gestion de table
+ * @author Céliane A. et Jules F. (Edit : Quentin M.)
+ * @date 2021 - 2022
+ */
+
 
 #include "table.h"
 
@@ -531,8 +535,43 @@ field_record_t *find_field_in_table_record(char *field_name, table_record_t *rec
  */
 bool is_matching_filter(table_record_t *record, filter_t *filter) {
     bool is_matching = false;
-    for () {
-
+    int matching = 0;
+    int j;
+    for (int i = 0; i < filter->values.fields_count; i++) {
+      j = 0;
+      while (filter->values.fields[i].column_name != record->fields[j].column_name && j < record->fields_count) {
+        j++;
+      }
+      if (filter->values.fields[i].column_name == record->fields[j].column_name) { //To check why we left while loop
+        switch (filter->values.fields[i].field_type) {
+          case TYPE_PRIMARY_KEY:
+            if (filter->values.fields[i].field_value.primary_key_value == record->fields[j].field_value.primary_key_value) {
+              matching++;
+            }
+            break;
+          case TYPE_INTEGER:
+            if (filter->values.fields[i].field_value.int_value == record->fields[j].field_value.int_value) {
+              matching++;
+            }
+            break;
+          case TYPE_FLOAT:
+            if (filter->values.fields[i].field_value.float_value == record->fields[j].field_value.float_value) {
+              matching++;
+            }
+            break;
+          case TYPE_TEXT:
+            if (strcmp(filter->values.fields[i].field_value.text_value, record->fields[j].field_value.text_value) == 0) {
+              matching++;
+            }
+            break;
+          case TYPE_UNKNOWN:
+            printf("[is_matching_filter] Erreur dans le switch type.");
+            break;
+        }
+      }
+    }
+    if (matching == filter->values.fields_count) {
+      is_matching = true;
     }
     return is_matching;
 }

@@ -1,7 +1,3 @@
-//
-// Created by flassabe on 22/11/2021.
-//
-
 #ifndef _QUERY_EXEC_H
 #define _QUERY_EXEC_H
 

@@ -1,7 +1,3 @@
-//
-// Created by flassabe on 23/11/2021.
-//
-
 #ifndef _EXPAND_H
 #define _EXPAND_H
 

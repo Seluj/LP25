@@ -1,3 +1,10 @@
+/*
+ * @file main.c
+ * @brief Fichier main (fichier orginale: projet.c)
+ * @authors Jules F. (Edit : Céliane A., Pierre S. et Quentin M.)
+ * @date 2021 - 2022
+ */
+
 #include <getopt.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -112,41 +119,12 @@ int main(int argc, char *argv[]) {
     create_db_directory(db_name);
     chdir(db_name);
 
-    //a supprimer
-    if (directory_exists("table_2")) {
-        recursive_rmdir("table_2");
-    }
-
     char buffer[SQL_COMMAND_MAX_SIZE];
     //allocation de la mémoire dynamiquement
     query_result_t *commande = malloc(sizeof(query_result_t));
     //sauvegarde de la zone mémoire allouée
     query_result_t *temp = commande;
     
-    /*
-    table_definition_t *def = malloc(sizeof(table_definition_t));
-    def = get_table_definition("table_3", def);
-    table_record_t *record = malloc(sizeof(table_record_t));
-    record = get_table_record("table_3", 166, def, record);
-    printf("Name->type->valeur\n");
-    for (int untruc=0; untruc<record->fields_count; untruc++) {
-        printf("\t%d :%s->%d->", untruc, record->fields[untruc].column_name, record->fields[untruc].field_type);
-        switch (record->fields[untruc].field_type) {
-            case 1:
-                printf("%llu\n", record->fields[untruc].field_value.primary_key_value);
-                break;
-            case 2:
-                printf("%lld\n", record->fields[untruc].field_value.int_value);
-                break;
-            case 3:
-                printf("%f\n", record->fields[untruc].field_value.float_value);
-                break;
-            default:
-                printf("%s\n", record->fields[untruc].field_value.text_value);
-                break;
-            }
-    }
-    */
 
     printf("\nAttention: Le code fourni n'est pas terminé, seul quelques fonctions ont été implémentées mais ne suiffisent pas a faire fonctionner l'ensemble du programme\n");
 
@@ -174,6 +152,8 @@ int main(int argc, char *argv[]) {
                 if (check_query(commande)) {
                     expand(commande);
                     execute(commande);
+                    free(commande);
+                    commande = malloc(sizeof(query_result_t));
                 } else {
                     printf("La requete ne peut pas etre executee\n");
                 }

@@ -1,7 +1,9 @@
-//
-// Created by flassabe on 19/11/2021.
-//
-
+/*!
+ * @file check.c
+ * @brief fichier de la partie check
+ * @author Jules F.
+ * @date 2021 - 2022
+ */
 #include "check.h"
 
 #include <stdio.h>
@@ -60,8 +62,39 @@ bool check_query(query_result_t *query) {
  * @return true if valid, false if invalid
  */
 bool check_query_select(update_or_select_query_t *query) {
-
-
+    for (int v=0; v<query->set_clause.fields_count; v++) {
+        strcpy(query->set_clause.fields[v].column_name, query->set_clause.fields[v].field_value.text_value);
+    }
+    for (int v=0; v<query->where_clause.values.fields_count; v++) {
+        strcpy(query->where_clause.values.fields[v].column_name, query->where_clause.values.fields[v].field_value.text_value);
+    }
+    
+    printf("\n================ TEST ================\n\n");
+    printf("Table name :%s\n", query->table_name);
+    printf("Il y a %d champs\n", query->set_clause.fields_count);
+    printf("Il y a %d valeurs\n", query->where_clause.values.fields_count);
+    int untrucaupif=0;
+    printf("Champs->type->valeurs:\n");
+    while (untrucaupif< query->set_clause.fields_count) {
+        printf("\t%d :%s->%d->", untrucaupif, query->set_clause.fields[untrucaupif].column_name, query->set_clause.fields[untrucaupif].field_type);
+        switch (query->set_clause.fields[untrucaupif].field_type) {
+            case 1:
+                printf("%d\n", query->set_clause.fields[untrucaupif].field_value.primary_key_value);
+                break;
+            case 2:
+                printf("%d\n", query->set_clause.fields[untrucaupif].field_value.int_value);
+                break;
+            case 3:
+                printf("%f\n", query->set_clause.fields[untrucaupif].field_value.float_value);
+                break;
+            default:
+                printf("%s\n", query->set_clause.fields[untrucaupif].field_value.text_value);
+                break;
+        }
+        untrucaupif++;
+    }
+    printf("\n============== FIN TEST ==============\n\n");
+    
     bool ret = false;
     if (table_exists(query->table_name) == 0) {
         printf("La table n'existe pas\n");
@@ -70,6 +103,7 @@ bool check_query_select(update_or_select_query_t *query) {
         table_definition_t *definition = malloc(sizeof(table_definition_t));
         definition = get_table_definition(query->table_name, definition);
         if (query->set_clause.fields_count == 1 && strcmp(query->set_clause.fields[0].field_value.text_value, "*") == 0) {
+            strcpy(query->set_clause.fields[0].column_name, query->set_clause.fields[0].field_value.text_value);
             if (query->where_clause.values.fields_count == 0) {
                 ret = true;
             } else {

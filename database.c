@@ -1,6 +1,9 @@
-//
-// Created by flassabe on 16/11/2021.
-//
+/*!
+ * @file database.c
+ * @brief fichier de fonctions de gestion de la base de données
+ * @author Jules F.
+ * @date 2021 - 2022
+ */
 
 #include "database.h"
 
@@ -11,12 +14,21 @@
 
 #include "utils.h"
 
+/*!
+ * @brief créer un dossier pour la base de données s'il n'existe pas
+ * @param name nom de la base de données
+ */
 void create_db_directory(char *name) {
     if (!directory_exists(name)) {
         mkdir(name, S_IRWXU);
     }
 }
 
+/*
+ * @brief supprimer récursivement tous les fichiers et dossiers d'un dossier donné en parametre
+ * @param dirname dossier a supprimer
+ * @return un entier
+ */
 int recursive_rmdir(char *dirname) {
     DIR *d = opendir(dirname);
     size_t path_len = strlen(dirname);
